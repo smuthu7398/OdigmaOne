@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# next.js
+web/.next/
+web/out/
+web/next-env.d.ts
+
+# expo / react native
+mobile/.expo/
+mobile/dist/
+mobile/android/
+mobile/ios/
+
+# uploads (user content, never in git)
+web/uploads/
+uploads/
+
+# prisma
+prisma/*.db
+
+# builds & caches
+*.tsbuildinfo
+.turbo/
+coverage/
+
+# editor / os
+.vscode/
+.idea/
+.DS_Store
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# generated prisma client (rebuilt via prisma generate)
+web/src/generated/

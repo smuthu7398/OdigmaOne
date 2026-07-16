@@ -1,0 +1,350 @@
+// Odigma One — database schema (MySQL 8)
+// Covers all core entities so later phases only add, never restructure.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../web/src/generated/prisma"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ---------- Auth (Better Auth core tables + our extensions) ----------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Odigma extensions
+  roleId   String?
+  role     Role?   @relation(fields: [roleId], references: [id])
+  clientId String? // set when this user belongs to a client (Client role)
+  client   Client? @relation(fields: [clientId], references: [id])
+  isActive Boolean @default(true)
+  timezone String  @default("Asia/Kolkata")
+
+  sessions      Session[]
+  accounts      Account[]
+  tasksAssigned Task[]         @relation("TaskAssignee")
+  tasksCreated  Task[]         @relation("TaskAssigner")
+  comments      Comment[]
+  attachments   Attachment[]
+  workLogs      WorkLog[]
+  activities    Activity[]
+  notifications Notification[]
+
+  @@index([roleId])
+  @@index([clientId])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?  @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ---------- RBAC ----------
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false) // seeded roles can't be deleted
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("role")
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique // e.g. "task:update"
+  description String?
+  group       String // e.g. "task", "client" — for grouping in the UI
+
+  roles RolePermission[]
+
+  @@map("permission")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permission")
+}
+
+// ---------- Domain ----------
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+model Client {
+  id          String       @id @default(cuid())
+  name        String
+  companyName String?
+  email       String?
+  phone       String?
+  status      ClientStatus @default(ACTIVE)
+  notes       String?      @db.Text
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime? // soft delete
+
+  projects    Project[]
+  tasks       Task[]
+  users       User[] // client-portal users
+  workLogs    WorkLog[]
+  attachments Attachment[]
+  feedback    ClientFeedback[]
+
+  @@index([status])
+  @@map("client")
+}
+
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id])
+  name        String
+  description String?       @db.Text
+  status      ProjectStatus @default(ACTIVE)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  tasks Task[]
+
+  @@index([clientId])
+  @@map("project")
+}
+
+enum TaskType {
+  TASK
+  BUG
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  BLOCKED
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  number         Int          @unique @default(autoincrement()) // human-friendly: ODG-123
+  type           TaskType     @default(TASK)
+  clientId       String
+  client         Client       @relation(fields: [clientId], references: [id])
+  projectId      String?
+  project        Project?     @relation(fields: [projectId], references: [id])
+  title          String
+  description    String?      @db.Text
+  category       String?
+  priority       TaskPriority @default(MEDIUM)
+  status         TaskStatus   @default(TODO)
+  assignedById   String
+  assignedBy     User         @relation("TaskAssigner", fields: [assignedById], references: [id])
+  assignedToId   String?
+  assignedTo     User?        @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  estimatedHours Decimal?     @db.Decimal(6, 2)
+  actualHours    Decimal?     @db.Decimal(6, 2)
+  progress       Int          @default(0) // 0–100
+  dueDate        DateTime?
+  boardOrder     Int          @default(0) // position within Kanban column
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  comments    Comment[]
+  attachments Attachment[]
+  workLogs    WorkLog[]
+  feedback    ClientFeedback[]
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("task")
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  taskId    String
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+  body      String    @db.Text
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  attachments Attachment[]
+
+  @@index([taskId])
+  @@map("comment")
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  fileName     String // stored name on disk
+  originalName String // name as uploaded
+  mimeType     String
+  size         Int // bytes
+  path         String // relative to UPLOADS_DIR
+  uploaderId   String
+  uploader     User     @relation(fields: [uploaderId], references: [id])
+  taskId       String?
+  task         Task?    @relation(fields: [taskId], references: [id])
+  commentId    String?
+  comment      Comment? @relation(fields: [commentId], references: [id])
+  clientId     String?
+  client       Client?  @relation(fields: [clientId], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([taskId])
+  @@index([clientId])
+  @@map("attachment")
+}
+
+model WorkLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  taskId      String?
+  task        Task?    @relation(fields: [taskId], references: [id])
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id])
+  workDate    DateTime @db.Date // the day the work belongs to (user's timezone)
+  description String   @db.Text
+  hours       Decimal  @db.Decimal(5, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, workDate])
+  @@index([taskId])
+  @@map("work_log")
+}
+
+model Activity {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  entityType String // "task" | "client" | "project" | ...
+  entityId   String
+  action     String // "created" | "updated" | "status_changed" | ...
+  meta       Json? // diff / extra context
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@map("activity")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // "task_assigned" | "comment_added" | ...
+  title     String
+  body      String?   @db.Text
+  link      String? // in-app route to open
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@map("notification")
+}
+
+model ClientFeedback {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id])
+  rating    Int? // 1–5
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+  @@map("client_feedback")
+}

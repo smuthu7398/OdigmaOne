@@ -1,0 +1,26 @@
+{
+  "name": "odigma-one",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Odigma One — client task manager (web + mobile)",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=11"
+  },
+  "packageManager": "pnpm@11.13.1",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "db:generate": "pnpm --filter web exec prisma generate",
+    "db:migrate": "pnpm --filter web exec prisma migrate dev",
+    "db:seed": "pnpm --filter web exec prisma db seed",
+    "db:studio": "pnpm --filter web exec prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3"
+  },
+  "devDependencies": {
+    "prisma": "6.19.3",
+    "tsx": "^4.23.1"
+  }
+}

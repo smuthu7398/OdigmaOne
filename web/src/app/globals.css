@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/*
+ * Odigma One design tokens — single source of truth.
+ * Spec: docs/UI_Design_Guide.md. Light is the default theme; add `.dark`
+ * on <html> to switch. Never hardcode colors in components.
+ */
+
+:root {
+  /* light theme (default) */
+  --background: #f6f4f1;
+  --surface: #ffffff;
+  --surface-raised: #f3f0ea;
+  --border: #e5e0d8;
+  --foreground: #1d1c1a;
+  --muted-foreground: #6f6a62;
+
+  --primary: #f26222;
+  --primary-foreground: #ffffff;
+  --primary-glow: rgb(242 98 34 / 20%);
+
+  /* task status */
+  --status-todo: #94a3b8;
+  --status-in-progress: #3b82f6;
+  --status-in-review: #a855f7;
+  --status-blocked: #ef4444;
+  --status-done: #22c55e;
+
+  /* priority */
+  --priority-low: #94a3b8;
+  --priority-medium: #eab308;
+  --priority-high: #f97316;
+  --priority-urgent: #ef4444;
+
+  /* semantic */
+  --success: #22c55e;
+  --warning: #eab308;
+  --destructive: #ef4444;
+
+  --radius: 12px;
+  --radius-input: 10px;
+}
+
+.dark {
+  --background: #171717;
+  --surface: #1f1e1c;
+  --surface-raised: #26241f;
+  --border: #2e2c28;
+  --foreground: #f7f5f2;
+  --muted-foreground: #a39e96;
+  --primary-glow: rgb(242 98 34 / 35%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-status-todo: var(--status-todo);
+  --color-status-in-progress: var(--status-in-progress);
+  --color-status-in-review: var(--status-in-review);
+  --color-status-blocked: var(--status-blocked);
+  --color-status-done: var(--status-done);
+  --color-priority-low: var(--priority-low);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-high: var(--priority-high);
+  --color-priority-urgent: var(--priority-urgent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --radius-card: var(--radius);
+  --radius-input: var(--radius-input);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* stats and table numbers always align */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,11 +1,15 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { expo } from "@better-auth/expo";
 import { prisma } from "./prisma";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "mysql" }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
+  plugins: [expo()],
+  // native app schemes (odigmaone = production build, exp = Expo Go in dev)
+  trustedOrigins: ["odigmaone://", "exp://", "exp://*"],
   emailAndPassword: {
     enabled: true,
   },

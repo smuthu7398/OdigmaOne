@@ -8,6 +8,11 @@
     "pnpm": ">=11"
   },
   "packageManager": "pnpm@11.13.1",
+  "pnpm": {
+    "overrides": {
+      "zod": "4.4.3"
+    }
+  },
   "scripts": {
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build",

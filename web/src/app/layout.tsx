@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -9,7 +10,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Odigma One",
-  description: "Client task manager — clients, tasks, work logs and reports in one place.",
+  description:
+    "Client task manager — clients, tasks, work logs and reports in one place.",
 };
 
 export default function RootLayout({
@@ -20,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

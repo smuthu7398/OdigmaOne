@@ -1,23 +1,54 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 /*
  * Odigma One design tokens — single source of truth.
- * Spec: docs/UI_Design_Guide.md. Light is the default theme; add `.dark`
- * on <html> to switch. Never hardcode colors in components.
+ * Spec: docs/UI_Design_Guide.md. Light is the default theme; `.dark` on
+ * <html> switches. shadcn/ui token names, Odigma values.
+ * Never hardcode colors in components.
  */
 
 :root {
   /* light theme (default) */
   --background: #f6f4f1;
-  --surface: #ffffff;
-  --surface-raised: #f3f0ea;
-  --border: #e5e0d8;
   --foreground: #1d1c1a;
-  --muted-foreground: #6f6a62;
-
+  --card: #ffffff;
+  --card-foreground: #1d1c1a;
+  --popover: #ffffff;
+  --popover-foreground: #1d1c1a;
   --primary: #f26222;
   --primary-foreground: #ffffff;
   --primary-glow: rgb(242 98 34 / 20%);
+  --secondary: #f3f0ea;
+  --secondary-foreground: #1d1c1a;
+  --muted: #f3f0ea;
+  --muted-foreground: #6f6a62;
+  --accent: #f0ece5;
+  --accent-foreground: #1d1c1a;
+  --destructive: #ef4444;
+  --border: #e5e0d8;
+  --input: #e5e0d8;
+  --ring: #f26222;
+
+  /* charts — orange leads, then the status family */
+  --chart-1: #f26222;
+  --chart-2: #3b82f6;
+  --chart-3: #a855f7;
+  --chart-4: #22c55e;
+  --chart-5: #eab308;
+
+  /* sidebar */
+  --sidebar: #fbf9f6;
+  --sidebar-foreground: #1d1c1a;
+  --sidebar-primary: #f26222;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(242 98 34 / 10%);
+  --sidebar-accent-foreground: #1d1c1a;
+  --sidebar-border: #ece8e1;
+  --sidebar-ring: #f26222;
 
   /* task status */
   --status-todo: #94a3b8;
@@ -35,31 +66,73 @@
   /* semantic */
   --success: #22c55e;
   --warning: #eab308;
-  --destructive: #ef4444;
 
-  --radius: 12px;
-  --radius-input: 10px;
+  --radius: 0.75rem; /* 12px cards per UI guide */
 }
 
 .dark {
   --background: #171717;
-  --surface: #1f1e1c;
-  --surface-raised: #26241f;
-  --border: #2e2c28;
   --foreground: #f7f5f2;
-  --muted-foreground: #a39e96;
+  --card: #1f1e1c;
+  --card-foreground: #f7f5f2;
+  --popover: #26241f;
+  --popover-foreground: #f7f5f2;
+  --primary: #f26222;
+  --primary-foreground: #ffffff;
   --primary-glow: rgb(242 98 34 / 35%);
+  --secondary: #26241f;
+  --secondary-foreground: #f7f5f2;
+  --muted: #26241f;
+  --muted-foreground: #a39e96;
+  --accent: #2b2925;
+  --accent-foreground: #f7f5f2;
+  --destructive: #ef4444;
+  --border: #2e2c28;
+  --input: #2e2c28;
+  --ring: #f26222;
+
+  --sidebar: #191816;
+  --sidebar-foreground: #f7f5f2;
+  --sidebar-primary: #f26222;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(242 98 34 / 14%);
+  --sidebar-accent-foreground: #f7f5f2;
+  --sidebar-border: #26241f;
+  --sidebar-ring: #f26222;
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-surface: var(--surface);
-  --color-surface-raised: var(--surface-raised);
-  --color-border: var(--border);
   --color-foreground: var(--foreground);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --color-status-todo: var(--status-todo);
   --color-status-in-progress: var(--status-in-progress);
   --color-status-in-review: var(--status-in-review);
@@ -71,15 +144,27 @@
   --color-priority-urgent: var(--priority-urgent);
   --color-success: var(--success);
   --color-warning: var(--warning);
-  --color-destructive: var(--destructive);
-  --radius-card: var(--radius);
-  --radius-input: var(--radius-input);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }
 
 /* stats and table numbers always align */

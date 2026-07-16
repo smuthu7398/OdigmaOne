@@ -10,6 +10,8 @@ import {
   Settings,
   History,
   MessageCircleHeart,
+  UserCog,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,6 +45,13 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: "Feedback", href: "/feedback", icon: MessageCircleHeart, permission: "feedback:read" },
       { title: "Notifications", href: "/notifications", icon: Bell, permission: "notification:read" },
       { title: "Settings", href: "/settings", icon: Settings },
+    ],
+  },
+  {
+    label: "Admin",
+    items: [
+      { title: "Team", href: "/team", icon: UserCog, permission: "user:read" },
+      { title: "Roles", href: "/roles", icon: ShieldCheck, permission: "role:read" },
     ],
   },
 ];

@@ -66,6 +66,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TaskFormDialog, type TaskRow } from "./task-form-dialog";
+import { ViewSwitcher } from "./view-switcher";
 
 export function TasksView({
   canCreate,
@@ -161,17 +162,20 @@ export function TasksView({
             {meta ? `${meta.total} total` : "…"}
           </p>
         </div>
-        {canCreate && (
-          <Button
-            className="ml-auto rounded-full shadow-[0_4px_18px_-4px_var(--primary-glow)]"
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
-            <Plus /> New Task
-          </Button>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          <ViewSwitcher />
+          {canCreate && (
+            <Button
+              className="rounded-full shadow-[0_4px_18px_-4px_var(--primary-glow)]"
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              <Plus /> New Task
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

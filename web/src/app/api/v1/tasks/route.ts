@@ -33,6 +33,8 @@ const listQuerySchema = paginationQuerySchema.extend({
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   type: z.enum(["TASK", "BUG"]).optional(),
   due: z.enum(["today", "overdue"]).optional(),
+  dueFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  dueTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -55,6 +57,8 @@ export async function GET(request: NextRequest) {
     priority,
     type,
     due,
+    dueFrom,
+    dueTo,
   } = parsed.data;
 
   try {
@@ -81,6 +85,12 @@ export async function GET(request: NextRequest) {
       ...(due === "overdue" && {
         dueDate: { lt: dayStart },
         status: { not: "DONE" as const },
+      }),
+      ...((dueFrom || dueTo) && {
+        dueDate: {
+          ...(dueFrom && { gte: new Date(`${dueFrom}T00:00:00+05:30`) }),
+          ...(dueTo && { lte: new Date(`${dueTo}T23:59:59.999+05:30`) }),
+        },
       }),
       ...(q && {
         OR: [

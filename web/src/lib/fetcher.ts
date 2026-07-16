@@ -15,10 +15,14 @@ export async function api<T>(
   url: string,
   init?: RequestInit
 ): Promise<{ data: T; meta?: PaginationMeta }> {
+  const isFormData = init?.body instanceof FormData;
   const res = await fetch(url, {
     ...init,
     headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      // FormData sets its own multipart boundary — don't override it
+      ...(init?.body && !isFormData
+        ? { "Content-Type": "application/json" }
+        : {}),
       ...init?.headers,
     },
   });

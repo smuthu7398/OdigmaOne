@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { signOut, useSession } from "../../lib/auth-client";
 import { initials } from "../../lib/api";
+import { unregisterPush } from "../../lib/notifications";
 import { colors, radius } from "../../lib/theme";
 
 export default function ProfileScreen() {
@@ -11,6 +12,7 @@ export default function ProfileScreen() {
   const user = session?.user;
 
   async function handleSignOut() {
+    await unregisterPush(); // stop pushes to this device first
     await signOut();
     router.replace("/login");
   }

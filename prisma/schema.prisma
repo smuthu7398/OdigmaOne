@@ -40,6 +40,7 @@ model User {
   workLogs      WorkLog[]
   activities    Activity[]
   notifications Notification[]
+  pushTokens    PushToken[]
 
   @@index([roleId])
   @@index([clientId])
@@ -333,6 +334,19 @@ model Notification {
 
   @@index([userId, readAt])
   @@map("notification")
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique // Expo push token (ExponentPushToken[...])
+  platform  String // "ios" | "android"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("push_token")
 }
 
 model ClientFeedback {

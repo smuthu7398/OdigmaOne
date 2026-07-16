@@ -1,11 +1,34 @@
+import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { Redirect, Tabs } from "expo-router";
+import { Redirect, Tabs, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as Notifications from "expo-notifications";
 import { useSession } from "../../lib/auth-client";
+import { registerForPush } from "../../lib/notifications";
 import { colors } from "../../lib/theme";
 
 export default function TabsLayout() {
   const { data: session, isPending } = useSession();
+
+  // register this device for push once we have a session
+  useEffect(() => {
+    if (session) registerForPush();
+  }, [session?.user.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // tapping a push opens the task it points at
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const link = response.notification.request.content.data?.link as
+          | string
+          | undefined;
+        if (link?.startsWith("/tasks/")) {
+          router.push(`/task/${link.split("/").pop()}`);
+        }
+      }
+    );
+    return () => sub.remove();
+  }, []);
 
   if (isPending) {
     return (

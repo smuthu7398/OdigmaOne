@@ -3,6 +3,7 @@ import { updateTaskSchema } from "@odigma/shared";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
+import { notify } from "@/lib/notify";
 import {
   forbidden,
   internalError,
@@ -103,6 +104,27 @@ export async function PATCH(request: NextRequest, { params }: Params) {
           ? { number: existing.number, from: existing.status, to: data.status }
           : { number: existing.number, fields: Object.keys(data) },
     });
+
+    if (data.assignedToId && data.assignedToId !== existing.assignedToId) {
+      await notify({
+        userIds: [data.assignedToId],
+        actorId: user.id,
+        type: "task_assigned",
+        title: `${user.name} assigned you ODG-${existing.number}`,
+        body: existing.title,
+        link: `/tasks/${id}`,
+      });
+    }
+    if (data.status && data.status !== existing.status) {
+      await notify({
+        userIds: [existing.assignedToId, existing.assignedById],
+        actorId: user.id,
+        type: "task_status",
+        title: `ODG-${existing.number} is now ${data.status.replace("_", " ").toLowerCase()}`,
+        body: existing.title,
+        link: `/tasks/${id}`,
+      });
+    }
     return ok(task);
   } catch (err) {
     return internalError(err);

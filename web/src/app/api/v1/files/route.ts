@@ -22,21 +22,57 @@ export async function GET(request: NextRequest) {
   const { user, error } = await requirePermission("file:read");
   if (error) return error;
 
-  const taskId = request.nextUrl.searchParams.get("taskId");
-  if (!taskId) return fail(400, "VALIDATION_ERROR", "taskId is required");
+  const params = request.nextUrl.searchParams;
+  const taskId = params.get("taskId");
+  const clientId = params.get("clientId");
+  const q = params.get("q");
+  const page = Math.max(1, Number(params.get("page") ?? 1));
+  const pageSize = Math.min(100, Math.max(1, Number(params.get("pageSize") ?? 20)));
 
-  const task = await prisma.task.findFirst({
-    where: { id: taskId, deletedAt: null },
-  });
-  if (!task) return notFound("Task");
-  if (user.clientId && task.clientId !== user.clientId) return forbidden();
+  if (taskId) {
+    const task = await prisma.task.findFirst({
+      where: { id: taskId, deletedAt: null },
+    });
+    if (!task) return notFound("Task");
+    if (user.clientId && task.clientId !== user.clientId) return forbidden();
 
-  const files = await prisma.attachment.findMany({
-    where: { taskId },
-    orderBy: { createdAt: "desc" },
-    include: ATTACHMENT_INCLUDE,
+    const files = await prisma.attachment.findMany({
+      where: { taskId },
+      orderBy: { createdAt: "desc" },
+      include: ATTACHMENT_INCLUDE,
+    });
+    return ok(files);
+  }
+
+  // file-manager listing across everything (portal users: own client only)
+  const where = {
+    ...(user.clientId
+      ? { clientId: user.clientId }
+      : clientId
+        ? { clientId }
+        : {}),
+    ...(q ? { originalName: { contains: q } } : {}),
+  };
+  const [items, total] = await Promise.all([
+    prisma.attachment.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        ...ATTACHMENT_INCLUDE,
+        task: { select: { id: true, number: true, title: true } },
+        client: { select: { id: true, name: true } },
+      },
+    }),
+    prisma.attachment.count({ where }),
+  ]);
+  return ok(items, {
+    page,
+    pageSize,
+    total,
+    totalPages: Math.ceil(total / pageSize),
   });
-  return ok(files);
 }
 
 export async function POST(request: NextRequest) {

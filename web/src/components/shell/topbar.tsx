@@ -24,6 +24,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { NAV_GROUPS } from "./nav";
+import { NotificationBell } from "./notification-bell";
 
 function initials(name: string) {
   return name
@@ -85,6 +86,8 @@ export function Topbar({
           Ctrl K
         </kbd>
       </button>
+
+      <NotificationBell enabled={allowed.has("notification:read")} />
 
       <Button
         variant="ghost"

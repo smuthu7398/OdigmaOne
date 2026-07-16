@@ -8,6 +8,8 @@ import {
   BarChart3,
   Bell,
   Settings,
+  History,
+  MessageCircleHeart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,6 +39,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { title: "Files", href: "/files", icon: FileText, permission: "file:read" },
       { title: "Reports", href: "/reports", icon: BarChart3, permission: "report:read" },
+      { title: "Activity", href: "/activity", icon: History, permission: "activity:read" },
+      { title: "Feedback", href: "/feedback", icon: MessageCircleHeart, permission: "feedback:read" },
       { title: "Notifications", href: "/notifications", icon: Bell, permission: "notification:read" },
       { title: "Settings", href: "/settings", icon: Settings },
     ],

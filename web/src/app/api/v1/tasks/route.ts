@@ -3,6 +3,7 @@ import { createTaskSchema, paginationQuerySchema } from "@odigma/shared";
 import { prisma } from "@/lib/prisma";
 import { clientScope, requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
+import { notify } from "@/lib/notify";
 import {
   created,
   internalError,
@@ -148,6 +149,14 @@ export async function POST(request: NextRequest) {
       entityId: task.id,
       action: "created",
       meta: { number: task.number, title: task.title },
+    });
+    await notify({
+      userIds: [task.assignedToId],
+      actorId: user.id,
+      type: "task_assigned",
+      title: `${user.name} assigned you ODG-${task.number}`,
+      body: task.title,
+      link: `/tasks/${task.id}`,
     });
     return created(task);
   } catch (err) {

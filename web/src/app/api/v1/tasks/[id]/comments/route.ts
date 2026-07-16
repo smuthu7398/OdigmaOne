@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
+import { notify } from "@/lib/notify";
 import {
   created,
   forbidden,
@@ -73,6 +74,14 @@ export async function POST(request: NextRequest, { params }: Params) {
       entityId: comment.id,
       action: "created",
       meta: { taskNumber: task.number },
+    });
+    await notify({
+      userIds: [task.assignedToId, task.assignedById],
+      actorId: user.id,
+      type: "comment_added",
+      title: `${user.name} commented on ODG-${task.number}`,
+      body: parsed.data.body.slice(0, 120),
+      link: `/tasks/${task.id}`,
     });
     return created(comment);
   } catch (err) {

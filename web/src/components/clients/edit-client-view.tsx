@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Building2 } from "lucide-react";
+import { HeaderChip, PageHeader } from "@/components/page-header";
 import { api } from "@/lib/fetcher";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,19 +44,21 @@ export function EditClientView({ clientId }: { clientId: string }) {
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex items-center gap-3">
-        <BackButton href="/clients" label="Back to clients" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Edit {client.name}
-          </h1>
-          {client.companyName && (
-            <p className="text-sm text-muted-foreground">
-              {client.companyName}
-            </p>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        backHref="/clients"
+        backLabel="Back to clients"
+        crumbs={[
+          { label: "Clients", href: "/clients" },
+          { label: client.name },
+          { label: "Edit" },
+        ]}
+        title={`Edit ${client.name}`}
+        chips={
+          client.companyName ? (
+            <HeaderChip icon={Building2}>{client.companyName}</HeaderChip>
+          ) : undefined
+        }
+      />
 
       <ClientForm
             client={client}

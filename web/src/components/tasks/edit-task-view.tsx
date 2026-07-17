@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft, Building2, FolderKanban, Lock } from "lucide-react";
+import { HeaderChip, PageHeader } from "@/components/page-header";
 import { api } from "@/lib/fetcher";
 import { taskCode } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -79,18 +80,24 @@ export function EditTaskView({
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex items-center gap-3">
-        <BackButton href={`/tasks/${task.id}`} label="Back to task" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Edit {taskCode(task.number)}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {task.client.name}
-            {task.project && ` · ${task.project.name}`}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref={`/tasks/${task.id}`}
+        backLabel="Back to task"
+        crumbs={[
+          { label: "Tasks", href: "/tasks" },
+          { label: taskCode(task.number), href: `/tasks/${task.id}`, mono: true },
+          { label: "Edit" },
+        ]}
+        title={`Edit ${taskCode(task.number)}`}
+        chips={
+          <>
+            <HeaderChip icon={Building2}>{task.client.name}</HeaderChip>
+            {task.project && (
+              <HeaderChip icon={FolderKanban}>{task.project.name}</HeaderChip>
+            )}
+          </>
+        }
+      />
 
       <TaskForm
         task={task}

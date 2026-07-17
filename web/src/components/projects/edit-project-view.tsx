@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Building2 } from "lucide-react";
+import { HeaderChip, PageHeader } from "@/components/page-header";
 import { api } from "@/lib/fetcher";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,17 +44,17 @@ export function EditProjectView({ projectId }: { projectId: string }) {
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex items-center gap-3">
-        <BackButton href="/projects" label="Back to projects" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Edit {project.name}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {project.client.name}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/projects"
+        backLabel="Back to projects"
+        crumbs={[
+          { label: "Projects", href: "/projects" },
+          { label: project.name },
+          { label: "Edit" },
+        ]}
+        title={`Edit ${project.name}`}
+        chips={<HeaderChip icon={Building2}>{project.client.name}</HeaderChip>}
+      />
 
       <ProjectForm
             project={project}

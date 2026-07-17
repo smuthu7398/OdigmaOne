@@ -38,7 +38,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { decorateRichText } from "@/lib/richtext";
 import { type TaskRow } from "./task-form";
 import { TaskAttachments } from "./task-attachments";
-import { BackButton } from "@/components/back-button";
+import { HeaderChip, PageHeader } from "@/components/page-header";
 import { SectionLabel } from "@/components/section-label";
 
 type CommentRow = {
@@ -154,66 +154,53 @@ export function TaskDetail({
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="grid gap-3">
-        {/* breadcrumb row */}
-        <div className="flex items-center gap-3">
-          <BackButton href="/tasks" label="Back to tasks" />
-          <nav className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-            <Link href="/tasks" className="hover:text-primary">
-              Tasks
-            </Link>
-            <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
-            <span className="font-mono text-xs font-semibold text-foreground">
-              {taskCode(task.number)}
-            </span>
-          </nav>
-          {canEditTask && (
+      <PageHeader
+        backHref="/tasks"
+        backLabel="Back to tasks"
+        crumbs={[
+          { label: "Tasks", href: "/tasks" },
+          { label: taskCode(task.number), mono: true },
+        ]}
+        title={task.title}
+        titleBadge={
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold",
+              task.type === "BUG"
+                ? "bg-status-blocked/15 text-status-blocked"
+                : "bg-primary/10 text-primary"
+            )}
+          >
+            {task.type === "BUG" ? (
+              <Bug className="size-3.5" />
+            ) : (
+              <CheckSquare className="size-3.5" />
+            )}
+            {task.type === "BUG" ? "Bug" : "Task"}
+          </span>
+        }
+        chips={
+          <>
+            <HeaderChip icon={Building2}>{task.client.name}</HeaderChip>
+            {task.project && (
+              <HeaderChip icon={FolderKanban}>{task.project.name}</HeaderChip>
+            )}
+          </>
+        }
+        actions={
+          canEditTask ? (
             <Button
               asChild
               variant="outline"
-              className="ml-auto rounded-full bg-card shadow-sm"
+              className="rounded-full bg-card shadow-sm"
             >
               <Link href={`/tasks/${task.id}/edit`}>
                 <Pencil /> Edit
               </Link>
             </Button>
-          )}
-        </div>
-
-        {/* title + context */}
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{task.title}</h1>
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold",
-                task.type === "BUG"
-                  ? "bg-status-blocked/15 text-status-blocked"
-                  : "bg-primary/10 text-primary"
-              )}
-            >
-              {task.type === "BUG" ? (
-                <Bug className="size-3.5" />
-              ) : (
-                <CheckSquare className="size-3.5" />
-              )}
-              {task.type === "BUG" ? "Bug" : "Task"}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-xs">
-              <Building2 className="size-3" />
-              {task.client.name}
-            </span>
-            {task.project && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-xs">
-                <FolderKanban className="size-3" />
-                {task.project.name}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_330px]">
         <div className="grid content-start gap-4">

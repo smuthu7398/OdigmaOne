@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { BackButton } from "@/components/back-button";
+import { PageHeader } from "@/components/page-header";
 import type { DocRow } from "./doc-form";
 
 export function DocDetailView({
@@ -51,34 +51,38 @@ export function DocDetailView({
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-5">
-      <div className="flex flex-wrap items-center gap-4">
-        <BackButton href="/docs" label="Back to docs" />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {doc.client ? (
-              <Badge className="rounded-full border-0 bg-primary/10 text-primary">
-                <Building2 className="size-3" />
-                {doc.client.name}
-              </Badge>
-            ) : (
-              <Badge className="rounded-full border-0 bg-muted text-muted-foreground">
-                <Lock className="size-3" />
-                Internal
-              </Badge>
-            )}
-          </div>
-          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight">
-            {doc.title}
-          </h1>
-        </div>
-        {canUpdate && (
-          <Button asChild variant="outline" className="self-center rounded-full">
-            <Link href={`/docs/${doc.id}/edit`}>
-              <Pencil /> Edit
-            </Link>
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        backHref="/docs"
+        backLabel="Back to docs"
+        crumbs={[{ label: "Docs", href: "/docs" }, { label: doc.title }]}
+        title={doc.title}
+        titleBadge={
+          doc.client ? (
+            <Badge className="rounded-full border-0 bg-primary/10 text-primary">
+              <Building2 className="size-3" />
+              {doc.client.name}
+            </Badge>
+          ) : (
+            <Badge className="rounded-full border-0 bg-muted text-muted-foreground">
+              <Lock className="size-3" />
+              Internal
+            </Badge>
+          )
+        }
+        actions={
+          canUpdate ? (
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-full bg-card shadow-sm"
+            >
+              <Link href={`/docs/${doc.id}/edit`}>
+                <Pencil /> Edit
+              </Link>
+            </Button>
+          ) : undefined
+        }
+      />
 
       <Card>
         <CardContent>

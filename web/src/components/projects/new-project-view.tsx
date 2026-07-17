@@ -1,11 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ProjectForm } from "./project-form";
-import { BackButton } from "@/components/back-button";
+import { PageHeader } from "@/components/page-header";
 
 export function NewProjectView({
   lockedClientId,
@@ -16,17 +13,13 @@ export function NewProjectView({
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex items-center gap-3">
-        <BackButton href="/projects" label="Back to projects" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            New project
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Projects group a client&apos;s tasks — e.g. “Website Redesign”.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/projects"
+        backLabel="Back to projects"
+        crumbs={[{ label: "Projects", href: "/projects" }, { label: "New" }]}
+        title="New project"
+        subtitle="Projects group a client's tasks — e.g. “Website Redesign”."
+      />
 
       <ProjectForm
             project={null}

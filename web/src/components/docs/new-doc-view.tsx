@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BackButton } from "@/components/back-button";
+import { PageHeader } from "@/components/page-header";
 import { DocForm } from "./doc-form";
 
 export function NewDocView() {
@@ -9,15 +9,13 @@ export function NewDocView() {
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex items-center gap-4">
-        <BackButton href="/docs" label="Back to docs" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">New doc</h1>
-          <p className="text-sm text-muted-foreground">
-            Guides, SOPs, runbooks — internal or shared with a client.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/docs"
+        backLabel="Back to docs"
+        crumbs={[{ label: "Docs", href: "/docs" }, { label: "New" }]}
+        title="New doc"
+        subtitle="Guides, SOPs, runbooks — internal or shared with a client."
+      />
 
       <DocForm
         doc={null}

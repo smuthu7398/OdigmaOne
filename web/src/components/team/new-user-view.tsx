@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { BackButton } from "@/components/back-button";
+import { PageHeader } from "@/components/page-header";
 import { SectionLabel } from "@/components/section-label";
 import {
   Select,
@@ -94,16 +94,13 @@ export function NewUserView() {
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex items-center gap-4">
-        <BackButton href="/team" label="Back to team" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">New user</h1>
-          <p className="text-sm text-muted-foreground">
-            Self-signup is disabled — accounts are created here. Share the
-            password securely; they can change it in Settings.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/team"
+        backLabel="Back to team"
+        crumbs={[{ label: "Team", href: "/team" }, { label: "New" }]}
+        title="New user"
+        subtitle="Self-signup is disabled — accounts are created here. Share the password securely; they can change it in Settings."
+      />
 
       <form
         onSubmit={handleSubmit((v) => createMutation.mutate(v))}

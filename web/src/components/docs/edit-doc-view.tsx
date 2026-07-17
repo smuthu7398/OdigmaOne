@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/fetcher";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BackButton } from "@/components/back-button";
+import { PageHeader } from "@/components/page-header";
 import { DocForm, type DocRow } from "./doc-form";
 
 export function EditDocView({ docId }: { docId: string }) {
@@ -46,18 +46,17 @@ export function EditDocView({ docId }: { docId: string }) {
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex items-center gap-4">
-        <BackButton href={`/docs/${doc.id}`} label="Back to doc" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Edit “{doc.title}”
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {doc.client ? doc.client.name : "Internal"} · by{" "}
-            {doc.createdBy.name}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        backHref={`/docs/${doc.id}`}
+        backLabel="Back to doc"
+        crumbs={[
+          { label: "Docs", href: "/docs" },
+          { label: doc.title, href: `/docs/${doc.id}` },
+          { label: "Edit" },
+        ]}
+        title={`Edit “${doc.title}”`}
+        subtitle={`${doc.client ? doc.client.name : "Internal"} · by ${doc.createdBy.name}`}
+      />
 
       <DocForm
         doc={doc}

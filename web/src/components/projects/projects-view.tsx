@@ -77,11 +77,13 @@ export function ProjectsView({
   canUpdate,
   canDelete,
   isPortal,
+  portalClientId,
 }: {
   canCreate: boolean;
   canUpdate: boolean;
   canDelete: boolean;
   isPortal: boolean;
+  portalClientId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -372,6 +374,7 @@ export function ProjectsView({
         open={formOpen}
         onOpenChange={setFormOpen}
         project={editing}
+        lockedClientId={portalClientId}
       />
 
       <AlertDialog

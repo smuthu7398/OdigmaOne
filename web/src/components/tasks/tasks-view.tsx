@@ -74,12 +74,14 @@ export function TasksView({
   canDelete,
   canAssign,
   isPortal,
+  portalClientId,
 }: {
   canCreate: boolean;
   canUpdate: boolean;
   canDelete: boolean;
   canAssign: boolean;
   isPortal: boolean;
+  portalClientId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -493,6 +495,7 @@ export function TasksView({
         onOpenChange={setFormOpen}
         task={editing}
         canAssign={canAssign}
+        lockedClientId={portalClientId}
       />
 
       <AlertDialog

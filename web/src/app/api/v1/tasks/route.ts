@@ -136,6 +136,16 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return validationError(parsed.error);
   const data = parsed.data;
 
+  // portal users file requests for their own client only, unassigned, as To Do
+  if (user.clientId) {
+    data.clientId = user.clientId;
+    data.assignedToId = undefined;
+    data.status = "TODO";
+  }
+  if (data.assignedToId && !user.permissions.has("task:assign")) {
+    data.assignedToId = undefined;
+  }
+
   try {
     const client = await prisma.client.findFirst({
       where: { id: data.clientId, deletedAt: null },

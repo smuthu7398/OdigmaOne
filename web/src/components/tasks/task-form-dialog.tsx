@@ -74,12 +74,15 @@ export function TaskFormDialog({
   task,
   canAssign,
   defaultClientId,
+  lockedClientId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: TaskRow | null;
   canAssign: boolean;
   defaultClientId?: string;
+  /** portal users: client is fixed to their own — no dropdown */
+  lockedClientId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const isEdit = task !== null;
@@ -90,7 +93,7 @@ export function TaskFormDialog({
       api<{ id: string; name: string }[]>(
         "/api/v1/clients?pageSize=100&status=ACTIVE"
       ),
-    enabled: open,
+    enabled: open && !lockedClientId,
   });
 
   const usersQuery = useQuery({
@@ -126,7 +129,7 @@ export function TaskFormDialog({
     if (open) {
       reset({
         type: task?.type ?? "TASK",
-        clientId: task?.clientId ?? defaultClientId ?? "",
+        clientId: task?.clientId ?? lockedClientId ?? defaultClientId ?? "",
         projectId: task?.projectId ?? undefined,
         title: task?.title ?? "",
         description: task?.description ?? undefined,
@@ -199,36 +202,38 @@ export function TaskFormDialog({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2">
-              <Label>Client *</Label>
-              <Select
-                value={clientId || undefined}
-                onValueChange={(v) => {
-                  setValue("clientId", v, { shouldValidate: true });
-                  setValue("projectId", undefined);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={
-                      clientsQuery.isLoading ? "Loading…" : "Select a client"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {(clientsQuery.data?.data ?? []).map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.clientId && (
-                <p className="text-sm text-destructive">
-                  {errors.clientId.message}
-                </p>
-              )}
-            </div>
+            {!lockedClientId && (
+              <div className="grid gap-2">
+                <Label>Client *</Label>
+                <Select
+                  value={clientId || undefined}
+                  onValueChange={(v) => {
+                    setValue("clientId", v, { shouldValidate: true });
+                    setValue("projectId", undefined);
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        clientsQuery.isLoading ? "Loading…" : "Select a client"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(clientsQuery.data?.data ?? []).map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.clientId && (
+                  <p className="text-sm text-destructive">
+                    {errors.clientId.message}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="grid gap-2">
               <Label>Project</Label>
               <Select

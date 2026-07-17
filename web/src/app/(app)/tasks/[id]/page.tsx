@@ -13,14 +13,15 @@ export default async function TaskDetailPage({
   if (!can(user, "task:read")) redirect("/dashboard");
   const { id } = await params;
 
+  const isPortal = user.clientId !== null;
   return (
     <TaskDetail
       taskId={id}
       currentUserId={user.id}
-      canUpdate={can(user, "task:update")}
-      canAssign={can(user, "task:assign")}
+      canUpdate={can(user, "task:update") && !isPortal}
+      canAssign={can(user, "task:assign") && !isPortal}
       canComment={can(user, "comment:create")}
-      canModerate={can(user, "comment:delete")}
+      canModerate={can(user, "comment:delete") && !isPortal}
     />
   );
 }

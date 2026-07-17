@@ -77,6 +77,9 @@ export async function POST(request: NextRequest) {
   const parsed = createProjectSchema.safeParse(body);
   if (!parsed.success) return validationError(parsed.error);
 
+  // portal users create projects under their own client only
+  if (user.clientId) parsed.data.clientId = user.clientId;
+
   try {
     const client = await prisma.client.findFirst({
       where: { id: parsed.data.clientId, deletedAt: null },

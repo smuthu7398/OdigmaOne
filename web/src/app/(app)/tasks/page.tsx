@@ -8,13 +8,17 @@ export default async function TasksPage() {
   const user = (await getSessionUser())!;
   if (!can(user, "task:read")) redirect("/dashboard");
 
+  const isPortal = user.clientId !== null;
   return (
     <TasksView
       canCreate={can(user, "task:create")}
-      canUpdate={can(user, "task:update")}
-      canDelete={can(user, "task:delete")}
-      canAssign={can(user, "task:assign")}
-      isPortal={user.clientId !== null}
+      // portal users can create requests but not edit/assign/delete —
+      // the API enforces this too; hiding dead controls keeps the UI honest
+      canUpdate={can(user, "task:update") && !isPortal}
+      canDelete={can(user, "task:delete") && !isPortal}
+      canAssign={can(user, "task:assign") && !isPortal}
+      isPortal={isPortal}
+      portalClientId={user.clientId}
     />
   );
 }

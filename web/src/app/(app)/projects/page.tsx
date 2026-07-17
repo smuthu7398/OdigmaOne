@@ -8,12 +8,14 @@ export default async function ProjectsPage() {
   const user = (await getSessionUser())!;
   if (!can(user, "project:read")) redirect("/dashboard");
 
+  const isPortal = user.clientId !== null;
   return (
     <ProjectsView
       canCreate={can(user, "project:create")}
-      canUpdate={can(user, "project:update")}
-      canDelete={can(user, "project:delete")}
-      isPortal={user.clientId !== null}
+      canUpdate={can(user, "project:update") && !isPortal}
+      canDelete={can(user, "project:delete") && !isPortal}
+      isPortal={isPortal}
+      portalClientId={user.clientId}
     />
   );
 }

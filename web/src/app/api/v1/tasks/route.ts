@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { clientScope, requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notify";
+import { sanitizeRichText } from "@/lib/sanitize";
 import {
   created,
   fail,
@@ -138,6 +139,8 @@ export async function POST(request: NextRequest) {
   const parsed = createTaskSchema.safeParse(body);
   if (!parsed.success) return validationError(parsed.error);
   const { assigneeIds, ...data } = parsed.data;
+
+  if (data.description) data.description = sanitizeRichText(data.description);
 
   // portal users file requests for their own client only, always as To Do
   if (user.clientId) {

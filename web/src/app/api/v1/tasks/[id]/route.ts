@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notify";
+import { sanitizeRichText } from "@/lib/sanitize";
 import {
   fail,
   forbidden,
@@ -55,6 +56,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const parsed = updateTaskSchema.safeParse(body);
   if (!parsed.success) return validationError(parsed.error);
   const { assigneeIds, ...data } = parsed.data;
+
+  if (data.description) data.description = sanitizeRichText(data.description);
 
   try {
     const existing = await prisma.task.findFirst({

@@ -184,7 +184,19 @@ export default function TaskDetailScreen() {
               </View>
             </View>
             {task.description && (
-              <Text style={styles.description}>{task.description}</Text>
+              <Text style={styles.description}>
+                {/* rich-text HTML → readable plain text on mobile for now */}
+                {task.description
+                  .replace(/<br\s*\/?>/gi, "\n")
+                  .replace(/<\/(p|li|h[1-3]|blockquote|pre)>/gi, "\n")
+                  .replace(/<li[^>]*>/gi, "• ")
+                  .replace(/<[^>]+>/g, "")
+                  .replace(/&amp;/g, "&")
+                  .replace(/&lt;/g, "<")
+                  .replace(/&gt;/g, ">")
+                  .replace(/\n{3,}/g, "\n\n")
+                  .trim()}
+              </Text>
             )}
           </View>
 

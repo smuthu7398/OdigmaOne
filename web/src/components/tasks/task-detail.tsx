@@ -192,9 +192,18 @@ export function TaskDetail({
               <SectionLabel>Description</SectionLabel>
               {task.description ? (
                 <div className="rounded-xl bg-muted/40 p-4">
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {task.description}
-                  </p>
+                  {task.description.trimStart().startsWith("<") ? (
+                    // rich text — sanitized server-side on every write
+                    <div
+                      className="rich-text text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: task.description }}
+                    />
+                  ) : (
+                    // legacy plain-text descriptions
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {task.description}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">

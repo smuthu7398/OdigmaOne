@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
@@ -226,15 +226,16 @@ export function TaskForm({
 
             <div className="grid gap-2">
               <SectionLabel>Description</SectionLabel>
-              <Textarea
-                rows={8}
-                className="min-h-44 resize-y border-0 bg-muted/40 p-4 shadow-none focus-visible:ring-1"
+              <RichTextEditor
+                value={watch("description") ?? ""}
+                onChange={(html) =>
+                  setValue("description", html || undefined)
+                }
                 placeholder={
                   type === "BUG"
-                    ? "Steps to reproduce, expected vs actual, browser/device…"
-                    : "Context, goals, links, acceptance criteria…"
+                    ? "Steps to reproduce, expected vs actual… paste screenshots right here"
+                    : "Context, goals, links, acceptance criteria… paste screenshots right here"
                 }
-                {...register("description")}
               />
             </div>
           </CardContent>

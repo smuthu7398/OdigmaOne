@@ -107,7 +107,9 @@ export async function POST(request: NextRequest) {
       if (user.clientId && task.clientId !== user.clientId) return forbidden();
       clientId = task.clientId;
     } else if (user.clientId) {
-      return forbidden(); // portal uploads must target a task
+      // portal uploads without a task (e.g. editor screenshots while
+      // composing) attach to their own client
+      clientId = user.clientId;
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());

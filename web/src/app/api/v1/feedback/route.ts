@@ -3,6 +3,7 @@ import { paginationQuerySchema } from "@odigma/shared";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { notify } from "@/lib/notify";
+import { sanitizeRichText } from "@/lib/sanitize";
 import {
   created,
   fail,
@@ -14,7 +15,7 @@ import {
 import { z } from "zod";
 
 const createFeedbackSchema = z.object({
-  message: z.string().min(1, "Tell us something").max(5000),
+  message: z.string().min(1, "Tell us something").max(20000),
   rating: z.coerce.number().int().min(1).max(5).optional(),
   taskId: z.string().optional(),
   clientId: z.string().optional(), // team submitting on a client's behalf
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
         clientId,
         taskId: data.taskId ?? null,
         rating: data.rating ?? null,
-        message: data.message,
+        message: sanitizeRichText(data.message),
       },
       include: { client: { select: { id: true, name: true } } },
     });
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       actorId: user.id,
       type: "feedback_received",
       title: `New feedback from ${feedback.client.name}`,
-      body: data.message.slice(0, 120),
+      body: data.message.replace(/<[^>]+>/g, " ").trim().slice(0, 120),
       link: "/feedback",
     });
 

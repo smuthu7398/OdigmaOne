@@ -26,6 +26,7 @@ const PERMISSIONS: Record<string, string[]> = {
   notification: ["read"],
   activity: ["read"],
   feedback: ["create", "read"],
+  doc: ["create", "read", "update", "delete"],
   settings: ["manage"],
 };
 
@@ -51,6 +52,7 @@ const ROLES: Record<string, { description: string; perms: string[] }> = {
       "worklog:create", "worklog:read",
       "comment:create", "comment:read", "comment:update",
       "file:upload", "file:read",
+      "doc:create", "doc:read", "doc:update",
       "report:read", "notification:read", "activity:read", "feedback:read",
     ],
   },
@@ -62,6 +64,7 @@ const ROLES: Record<string, { description: string; perms: string[] }> = {
       "worklog:create", "worklog:read",
       "comment:create", "comment:read", "comment:update",
       "file:upload", "file:read",
+      "doc:create", "doc:read", "doc:update",
       "report:read", "notification:read", "activity:read",
     ],
   },
@@ -73,6 +76,7 @@ const ROLES: Record<string, { description: string; perms: string[] }> = {
       "worklog:create", "worklog:read",
       "comment:create", "comment:read",
       "file:upload", "file:read",
+      "doc:read",
       "notification:read",
     ],
   },
@@ -84,6 +88,7 @@ const ROLES: Record<string, { description: string; perms: string[] }> = {
       "worklog:create", "worklog:read",
       "comment:create", "comment:read",
       "file:upload", "file:read",
+      "doc:read",
       "notification:read",
     ],
   },
@@ -95,6 +100,7 @@ const ROLES: Record<string, { description: string; perms: string[] }> = {
       "file:upload", "file:read",
       "report:read", "notification:read",
       "feedback:create", "feedback:read",
+      "doc:read",
     ],
   },
 };

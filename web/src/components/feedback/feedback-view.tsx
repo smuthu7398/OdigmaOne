@@ -13,7 +13,8 @@ import { api } from "@/lib/fetcher";
 import { relativeTime, taskCode } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { decorateRichText } from "@/lib/richtext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
@@ -63,6 +64,7 @@ export function FeedbackView({
   const [message, setMessage] = useState("");
   const [rating, setRating] = useState(0);
   const [clientId, setClientId] = useState("");
+  const [composerKey, setComposerKey] = useState(0);
 
   const query = useQuery({
     queryKey: ["feedback"],
@@ -93,6 +95,7 @@ export function FeedbackView({
       toast.success("Feedback sent. Thank you!");
       setMessage("");
       setRating(0);
+      setComposerKey((k) => k + 1);
       queryClient.invalidateQueries({ queryKey: ["feedback"] });
     },
     onError: (err: Error) => toast.error(err.message),
@@ -165,13 +168,12 @@ export function FeedbackView({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="message">Message *</Label>
-                <Textarea
-                  id="message"
-                  rows={3}
+                <RichTextEditor
+                  key={composerKey}
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="min-h-20 border-0 bg-muted/40 p-4 shadow-none focus-visible:ring-1"
-                  placeholder="What's working well? What should we improve?"
+                  onChange={setMessage}
+                  minHeight="min-h-24"
+                  placeholder="What's working well? What should we improve? Paste screenshots right here"
                 />
               </div>
               <Button
@@ -217,7 +219,16 @@ export function FeedbackView({
                       {relativeTime(f.createdAt)}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed">{f.message}</p>
+                  {f.message.trimStart().startsWith("<") ? (
+                    <div
+                      className="rich-text text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: decorateRichText(f.message),
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm leading-relaxed">{f.message}</p>
+                  )}
                   {f.task && (
                     <p className="font-mono text-xs text-muted-foreground">
                       {taskCode(f.task.number)} — {f.task.title}

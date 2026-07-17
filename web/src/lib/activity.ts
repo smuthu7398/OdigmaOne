@@ -4,7 +4,7 @@ import type { Prisma } from "@/generated/prisma";
 /** Write an activity row. Never throws — logging must not break the action. */
 export async function logActivity(input: {
   actorId?: string;
-  entityType: "client" | "project" | "task" | "comment" | "user" | "role" | "file" | "worklog";
+  entityType: "client" | "project" | "task" | "comment" | "user" | "role" | "file" | "worklog" | "doc";
   entityId: string;
   action: string; // "created" | "updated" | "deleted" | "status_changed" | ...
   meta?: Prisma.InputJsonValue;

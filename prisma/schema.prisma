@@ -42,6 +42,7 @@ model User {
   notifications  Notification[]
   pushTokens     PushToken[]
   managedClients Client[]       @relation("ManagedClients")
+  documents      Document[]     @relation("DocAuthor")
 
   @@index([roleId])
   @@index([clientId])
@@ -161,6 +162,7 @@ model Client {
   workLogs    WorkLog[]
   attachments Attachment[]
   feedback    ClientFeedback[]
+  documents   Document[]
 
   @@index([status])
   @@map("client")
@@ -348,6 +350,22 @@ model Notification {
 
   @@index([userId, readAt])
   @@map("notification")
+}
+
+model Document {
+  id          String    @id @default(cuid())
+  title       String
+  content     String?   @db.MediumText // sanitized rich HTML
+  clientId    String? // null = internal / company-wide doc
+  client      Client?   @relation(fields: [clientId], references: [id])
+  createdById String
+  createdBy   User      @relation("DocAuthor", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([clientId])
+  @@map("document")
 }
 
 model PushToken {

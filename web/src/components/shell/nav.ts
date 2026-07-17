@@ -12,6 +12,7 @@ import {
   MessageCircleHeart,
   UserCog,
   ShieldCheck,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -39,6 +40,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Library",
     items: [
+      { title: "Docs", href: "/docs", icon: BookOpen, permission: "doc:read" },
       { title: "Files", href: "/files", icon: FileText, permission: "file:read" },
       { title: "Reports", href: "/reports", icon: BarChart3, permission: "report:read" },
       { title: "Activity", href: "/activity", icon: History, permission: "activity:read" },

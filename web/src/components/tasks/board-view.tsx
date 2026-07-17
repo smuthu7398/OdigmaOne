@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   DndContext,
   DragOverlay,
@@ -15,7 +21,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { toast } from "sonner";
-import { Bug } from "lucide-react";
+import { Bug, ChevronDown, Loader2 } from "lucide-react";
 import type { TaskStatus } from "@odigma/shared";
 import { api } from "@/lib/fetcher";
 import {
@@ -47,17 +53,16 @@ const COLUMNS: TaskStatus[] = [
   "DONE",
 ];
 
-function TaskCard({
-  task,
-  dragging,
-}: {
-  task: TaskRow;
-  dragging?: boolean;
-}) {
+/** cards fetched per column at a time — Load more pulls the next batch */
+const PAGE = 25;
+
+type ColumnData = { tasks: TaskRow[]; total: number; loading: boolean };
+
+function TaskCard({ task, dragging }: { task: TaskRow; dragging?: boolean }) {
   return (
     <div
       className={cn(
-        "grid gap-2 rounded-xl border bg-card p-3 shadow-sm transition-shadow",
+        "grid gap-2 rounded-xl border bg-card p-3 shadow-xs transition-shadow hover:shadow-sm",
         dragging && "rotate-2 shadow-lg ring-2 ring-primary/40"
       )}
     >
@@ -100,13 +105,7 @@ function TaskCard({
   );
 }
 
-function DraggableCard({
-  task,
-  canDrag,
-}: {
-  task: TaskRow;
-  canDrag: boolean;
-}) {
+function DraggableCard({ task, canDrag }: { task: TaskRow; canDrag: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task.id,
     disabled: !canDrag,
@@ -128,40 +127,78 @@ function DraggableCard({
 
 function Column({
   status,
-  tasks,
+  data,
   canDrag,
+  onLoadMore,
+  loadingMore,
 }: {
   status: TaskStatus;
-  tasks: TaskRow[];
+  data: ColumnData;
   canDrag: boolean;
+  onLoadMore: () => void;
+  loadingMore: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const meta = TASK_STATUS_META[status];
+  const remaining = data.total - data.tasks.length;
+
   return (
-    <div className="flex w-68 shrink-0 flex-col">
-      <div className="mb-2 flex items-center gap-2 px-1">
+    <div
+      className={cn(
+        "flex h-full w-72 shrink-0 flex-col rounded-2xl bg-muted/50 transition-shadow",
+        isOver && "ring-2 ring-primary/40"
+      )}
+    >
+      <div className="flex items-center gap-2 px-3.5 pb-2 pt-3">
         <span className={`size-2 rounded-full ${meta.dot}`} />
         <p className="text-xs font-semibold uppercase tracking-wide">
           {meta.label}
         </p>
-        <span className="rounded-full bg-muted px-2 text-xs font-semibold text-muted-foreground tabular-nums">
-          {tasks.length}
+        <span className="ml-auto rounded-full bg-card px-2 py-0.5 text-xs font-semibold text-muted-foreground shadow-xs tabular-nums">
+          {data.total}
         </span>
       </div>
+
       <div
         ref={setNodeRef}
-        className={cn(
-          "grid flex-1 content-start gap-2 rounded-xl border border-dashed p-2 transition-colors",
-          isOver ? "border-primary bg-primary/5" : "border-transparent bg-muted/40"
-        )}
+        className="grid min-h-0 flex-1 content-start gap-2 overflow-y-auto px-2 pb-2"
       >
-        {tasks.map((task) => (
-          <DraggableCard key={task.id} task={task} canDrag={canDrag} />
-        ))}
-        {tasks.length === 0 && (
-          <p className="py-6 text-center text-xs text-muted-foreground">
+        {data.loading ? (
+          <>
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+          </>
+        ) : data.tasks.length === 0 ? (
+          <p
+            className={cn(
+              "rounded-xl border border-dashed py-8 text-center text-xs",
+              isOver
+                ? "border-primary/50 text-primary"
+                : "border-border/60 text-muted-foreground"
+            )}
+          >
             {isOver ? "Drop here" : "No tasks"}
           </p>
+        ) : (
+          <>
+            {data.tasks.map((task) => (
+              <DraggableCard key={task.id} task={task} canDrag={canDrag} />
+            ))}
+            {remaining > 0 && (
+              <button
+                onClick={onLoadMore}
+                disabled={loadingMore}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border/60 py-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                {loadingMore ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <ChevronDown className="size-3.5" />
+                )}
+                Load {Math.min(PAGE, remaining)} more ({remaining} left)
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -177,6 +214,12 @@ export function BoardView({
 }) {
   const queryClient = useQueryClient();
   const [clientFilter, setClientFilter] = useState("ALL");
+  const [limits, setLimits] = useState<Record<TaskStatus, number>>(
+    Object.fromEntries(COLUMNS.map((s) => [s, PAGE])) as Record<
+      TaskStatus,
+      number
+    >
+  );
   const [activeTask, setActiveTask] = useState<TaskRow | null>(null);
 
   const sensors = useSensors(
@@ -192,15 +235,37 @@ export function BoardView({
     enabled: !isPortal,
   });
 
-  const queryKey = ["tasks", "board", clientFilter];
-  const query = useQuery({
-    queryKey,
-    queryFn: () =>
-      api<TaskRow[]>(
-        "/api/v1/tasks?pageSize=100&sort=-createdAt" +
-          (clientFilter !== "ALL" ? `&clientId=${clientFilter}` : "")
-      ),
+  const colKey = (status: TaskStatus) => [
+    "tasks",
+    "board",
+    clientFilter,
+    status,
+    limits[status],
+  ];
+
+  // one paginated query per column — 500 tasks never load at once
+  const results = useQueries({
+    queries: COLUMNS.map((status) => ({
+      queryKey: colKey(status),
+      queryFn: () =>
+        api<TaskRow[]>(
+          `/api/v1/tasks?pageSize=${limits[status]}&status=${status}&sort=-priority` +
+            (clientFilter !== "ALL" ? `&clientId=${clientFilter}` : "")
+        ),
+      placeholderData: keepPreviousData,
+    })),
   });
+
+  const columns: Record<TaskStatus, ColumnData> = Object.fromEntries(
+    COLUMNS.map((status, i) => [
+      status,
+      {
+        tasks: results[i].data?.data ?? [],
+        total: results[i].data?.meta?.total ?? 0,
+        loading: results[i].isLoading,
+      },
+    ])
+  ) as Record<TaskStatus, ColumnData>;
 
   const moveMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: TaskStatus }) =>
@@ -208,46 +273,54 @@ export function BoardView({
         method: "PATCH",
         body: JSON.stringify({ status }),
       }),
-    onError: (err: Error) => {
-      toast.error(err.message);
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+    onError: (err: Error) => toast.error(err.message),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
   });
 
-  const tasks = query.data?.data ?? [];
-
   function onDragStart(event: DragStartEvent) {
-    setActiveTask(tasks.find((t) => t.id === event.active.id) ?? null);
+    for (const status of COLUMNS) {
+      const task = columns[status].tasks.find((t) => t.id === event.active.id);
+      if (task) {
+        setActiveTask(task);
+        return;
+      }
+    }
   }
 
   function onDragEnd(event: DragEndEvent) {
     setActiveTask(null);
     const taskId = String(event.active.id);
-    const newStatus = event.over?.id as TaskStatus | undefined;
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task || !newStatus || task.status === newStatus) return;
+    const target = event.over?.id as TaskStatus | undefined;
+    if (!target) return;
 
-    // optimistic: move the card instantly, server sync in background
-    queryClient.setQueryData(
-      queryKey,
-      (old: { data: TaskRow[] } | undefined) =>
-        old && {
-          ...old,
-          data: old.data.map((t) =>
-            t.id === taskId ? { ...t, status: newStatus } : t
-          ),
-        }
+    const source = COLUMNS.find((s) =>
+      columns[s].tasks.some((t) => t.id === taskId)
     );
-    moveMutation.mutate({ id: taskId, status: newStatus });
-    toast.success(
-      `${taskCode(task.number)} → ${TASK_STATUS_META[newStatus].label}`
+    if (!source || source === target) return;
+    const task = columns[source].tasks.find((t) => t.id === taskId)!;
+
+    // optimistic: move the card across the two column caches instantly
+    type Cached = { data: TaskRow[]; meta?: { total: number } };
+    queryClient.setQueryData(colKey(source), (old: Cached | undefined) =>
+      old && {
+        ...old,
+        data: old.data.filter((t) => t.id !== taskId),
+        meta: old.meta && { ...old.meta, total: old.meta.total - 1 },
+      }
     );
+    queryClient.setQueryData(colKey(target), (old: Cached | undefined) =>
+      old && {
+        ...old,
+        data: [{ ...task, status: target }, ...old.data],
+        meta: old.meta && { ...old.meta, total: old.meta.total + 1 },
+      }
+    );
+    moveMutation.mutate({ id: taskId, status: target });
+    toast.success(`${taskCode(task.number)} → ${TASK_STATUS_META[target].label}`);
   }
 
   return (
-    <div className="grid gap-5">
+    <div className="flex h-[calc(100svh-10.5rem)] min-h-[460px] flex-col gap-5">
       <div className="flex flex-wrap items-center gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
@@ -258,7 +331,7 @@ export function BoardView({
         <div className="ml-auto flex items-center gap-2">
           {!isPortal && (
             <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40 bg-card">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -275,39 +348,35 @@ export function BoardView({
         </div>
       </div>
 
-      {query.isLoading ? (
-        <div className="flex gap-3 overflow-x-auto">
-          {COLUMNS.map((c) => (
-            <Skeleton key={c} className="h-80 w-68 shrink-0 rounded-xl" />
-          ))}
-        </div>
-      ) : (
-        <DndContext
-          sensors={sensors}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-        >
-          <div className="flex gap-3 overflow-x-auto pb-2">
+      <DndContext
+        sensors={sensors}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+      >
+        {/* the board scrolls horizontally by itself; columns scroll vertically */}
+        <div className="min-h-0 flex-1 overflow-x-auto">
+          <div className="flex h-full gap-3 pb-1">
             {COLUMNS.map((status) => (
               <Column
                 key={status}
                 status={status}
-                tasks={tasks
-                  .filter((t) => t.status === status)
-                  .sort(
-                    (a, b) =>
-                      ["URGENT", "HIGH", "MEDIUM", "LOW"].indexOf(a.priority) -
-                      ["URGENT", "HIGH", "MEDIUM", "LOW"].indexOf(b.priority)
-                  )}
+                data={columns[status]}
                 canDrag={canUpdate}
+                loadingMore={results[COLUMNS.indexOf(status)].isFetching}
+                onLoadMore={() =>
+                  setLimits((prev) => ({
+                    ...prev,
+                    [status]: prev[status] + PAGE,
+                  }))
+                }
               />
             ))}
           </div>
-          <DragOverlay>
-            {activeTask && <TaskCard task={activeTask} dragging />}
-          </DragOverlay>
-        </DndContext>
-      )}
+        </div>
+        <DragOverlay>
+          {activeTask && <TaskCard task={activeTask} dragging />}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }

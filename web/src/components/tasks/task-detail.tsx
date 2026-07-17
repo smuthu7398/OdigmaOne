@@ -360,20 +360,35 @@ export function TaskDetail({
             <div className="grid gap-2">
               <SectionLabel>Assignees ({task.assignees.length})</SectionLabel>
               {task.assignees.length > 0 ? (
-                <div className="grid gap-2">
-                  {task.assignees.map((a) => (
-                    <span
-                      key={a.user.id}
-                      className="inline-flex items-center gap-2.5"
-                    >
-                      <Avatar className="size-7">
+                <div
+                  className="grid gap-1.5"
+                  title={task.assignees.map((a) => a.user.name).join(", ")}
+                >
+                  <div className="flex -space-x-2">
+                    {task.assignees.slice(0, 6).map((a) => (
+                      <Avatar
+                        key={a.user.id}
+                        className="size-8 ring-2 ring-card"
+                      >
                         <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
                           {initials(a.user.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{a.user.name}</span>
-                    </span>
-                  ))}
+                    ))}
+                    {task.assignees.length > 6 && (
+                      <span className="z-10 flex size-8 items-center justify-center rounded-full bg-muted text-[10px] font-semibold ring-2 ring-card">
+                        +{task.assignees.length - 6}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {task.assignees
+                      .slice(0, 3)
+                      .map((a) => a.user.name.split(" ")[0])
+                      .join(", ")}
+                    {task.assignees.length > 3 &&
+                      ` +${task.assignees.length - 3} more`}
+                  </p>
                 </div>
               ) : (
                 <span className="text-muted-foreground">Unassigned</span>

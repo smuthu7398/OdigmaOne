@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notify";
 import { sanitizeRichText } from "@/lib/sanitize";
+import { linkEmbeddedFiles } from "@/lib/link-files";
 import {
   created,
   forbidden,
@@ -73,6 +74,10 @@ export async function POST(request: NextRequest, { params }: Params) {
         body: sanitizeRichText(parsed.data.body),
       },
       include: { author: { select: { id: true, name: true, image: true } } },
+    });
+    await linkEmbeddedFiles(comment.body, {
+      taskId: id,
+      clientId: task.clientId,
     });
     await logActivity({
       actorId: user.id,

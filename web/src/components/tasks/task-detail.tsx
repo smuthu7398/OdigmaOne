@@ -9,12 +9,16 @@ import {
   Bug,
   Building2,
   CalendarDays,
+  CheckCircle2,
   CheckSquare,
   ChevronRight,
+  CirclePlus,
   Clock,
   FolderKanban,
   Loader2,
   Pencil,
+  RefreshCw,
+  RotateCcw,
   SendHorizonal,
   Trash2,
 } from "lucide-react";
@@ -47,6 +51,31 @@ type CommentRow = {
   createdAt: string;
   author: { id: string; name: string; image: string | null };
 };
+
+type TaskEvent = {
+  id: string;
+  action: "created" | "status_changed" | "reopened";
+  meta: { from?: string; to?: string } | null;
+  createdAt: string;
+  actor: { id: string; name: string } | null;
+};
+
+function eventDescription(event: TaskEvent) {
+  if (event.action === "created") return "created this task";
+  if (event.action === "reopened") return "reopened this task";
+  const from = event.meta?.from;
+  const to = event.meta?.to;
+  if (to === "DONE") return "marked this as Done";
+  return `moved this from ${from ? TASK_STATUS_META[from]?.label ?? from : "…"} to ${
+    to ? TASK_STATUS_META[to]?.label ?? to : "…"
+  }`;
+}
+
+function eventIcon(event: TaskEvent) {
+  if (event.action === "created") return CirclePlus;
+  if (event.action === "reopened") return RotateCcw;
+  return event.meta?.to === "DONE" ? CheckCircle2 : RefreshCw;
+}
 
 export function TaskDetail({
   taskId,
@@ -83,6 +112,11 @@ export function TaskDetail({
     queryFn: () => api<CommentRow[]>(`/api/v1/tasks/${taskId}/comments`),
   });
 
+  const eventsQuery = useQuery({
+    queryKey: ["task-events", taskId],
+    queryFn: () => api<TaskEvent[]>(`/api/v1/tasks/${taskId}/events`),
+  });
+
   const statusMutation = useMutation({
     mutationFn: (status: TaskStatus) =>
       api(`/api/v1/tasks/${taskId}`, {
@@ -93,6 +127,7 @@ export function TaskDetail({
       toast.success(`Status → ${TASK_STATUS_META[status].label}`);
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task-events", taskId] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -150,10 +185,20 @@ export function TaskDetail({
   }
 
   const comments = commentsQuery.data?.data ?? [];
+  const events = eventsQuery.data?.data ?? [];
   // content edits belong to the creator alone
   const canEditTask = canUpdate && task.assignedBy.id === currentUserId;
   // status/progress always stay with the team
   const canChangeStatus = canUpdate && !isPortal;
+  // Basecamp rule: anyone involved (team OR the client) can reopen a
+  // completed task — the API allows portal users exactly this one move
+  const canReopen = task.status === "DONE" && (canChangeStatus || isPortal);
+
+  // comments + system events, oldest first, one discussion timeline
+  const timeline = [
+    ...comments.map((c) => ({ kind: "comment" as const, at: c.createdAt, comment: c })),
+    ...events.map((e) => ({ kind: "event" as const, at: e.createdAt, event: e })),
+  ].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
@@ -205,6 +250,36 @@ export function TaskDetail({
         }
       />
 
+      {task.status === "DONE" && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-status-done/30 bg-status-done/10 px-4 py-3">
+          <CheckCircle2 className="size-5 shrink-0 text-status-done" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-status-done">
+              This task is completed
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Not actually finished? Reopen it — the team will be notified and
+              it goes back to To&nbsp;Do.
+            </p>
+          </div>
+          {canReopen && (
+            <Button
+              variant="outline"
+              className="rounded-full bg-card"
+              disabled={statusMutation.isPending}
+              onClick={() => statusMutation.mutate("TODO")}
+            >
+              {statusMutation.isPending ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <RotateCcw />
+              )}
+              Reopen task
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_330px]">
         <div className="grid content-start gap-4">
           <Card>
@@ -237,16 +312,52 @@ export function TaskDetail({
 
           <Card>
             <CardContent className="grid gap-4">
-              <SectionLabel>Comments ({comments.length})</SectionLabel>
-              {commentsQuery.isLoading ? (
+              <SectionLabel>Discussion ({comments.length})</SectionLabel>
+              {commentsQuery.isLoading || eventsQuery.isLoading ? (
                 <Skeleton className="h-16" />
-              ) : comments.length === 0 ? (
+              ) : timeline.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No comments yet — start the discussion.
                 </p>
               ) : (
                 <ul className="grid gap-4">
-                  {comments.map((c) => (
+                  {timeline.map((item) => {
+                    if (item.kind === "event") {
+                      const event = item.event;
+                      const Icon = eventIcon(event);
+                      const isDone = event.meta?.to === "DONE";
+                      const isReopen = event.action === "reopened";
+                      return (
+                        <li
+                          key={`event-${event.id}`}
+                          className="flex items-center gap-3"
+                        >
+                          <span
+                            className={cn(
+                              "flex size-8 shrink-0 items-center justify-center rounded-full",
+                              isDone
+                                ? "bg-status-done/15 text-status-done"
+                                : isReopen
+                                  ? "bg-status-blocked/15 text-status-blocked"
+                                  : "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            <Icon className="size-3.5" />
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-semibold text-foreground">
+                              {event.actor?.name ?? "Someone"}
+                            </span>{" "}
+                            {eventDescription(event)} ·{" "}
+                            <span title={new Date(event.createdAt).toLocaleString("en-IN")}>
+                              {relativeTime(event.createdAt)}
+                            </span>
+                          </p>
+                        </li>
+                      );
+                    }
+                    const c = item.comment;
+                    return (
                     <li key={c.id} className="flex gap-3">
                       <Avatar className="mt-0.5 size-8">
                         <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
@@ -289,7 +400,8 @@ export function TaskDetail({
                         </Button>
                       )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
 

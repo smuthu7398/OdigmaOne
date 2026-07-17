@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { notify } from "@/lib/notify";
 import { sanitizeRichText } from "@/lib/sanitize";
+import { linkEmbeddedFiles } from "@/lib/link-files";
 import {
   created,
   fail,
@@ -82,6 +83,8 @@ export async function POST(request: NextRequest) {
       },
       include: { client: { select: { id: true, name: true } } },
     });
+
+    await linkEmbeddedFiles(feedback.message, { clientId });
 
     // let admins/managers know
     const managers = await prisma.user.findMany({

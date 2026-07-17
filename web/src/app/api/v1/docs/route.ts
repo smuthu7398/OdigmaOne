@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { sanitizeRichText } from "@/lib/sanitize";
+import { linkEmbeddedFiles } from "@/lib/link-files";
 import {
   created,
   internalError,
@@ -103,6 +104,7 @@ export async function POST(request: NextRequest) {
       },
       include: DOC_INCLUDE,
     });
+    await linkEmbeddedFiles(doc.content, { clientId: doc.clientId });
     await logActivity({
       actorId: user.id,
       entityType: "doc",

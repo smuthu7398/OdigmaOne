@@ -5,6 +5,7 @@ import { clientScope, requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notify";
 import { sanitizeRichText } from "@/lib/sanitize";
+import { linkEmbeddedFiles } from "@/lib/link-files";
 import {
   created,
   fail,
@@ -179,6 +180,10 @@ export async function POST(request: NextRequest) {
         },
       },
       include: TASK_INCLUDE,
+    });
+    await linkEmbeddedFiles(task.description, {
+      taskId: task.id,
+      clientId: task.clientId,
     });
     await logActivity({
       actorId: user.id,

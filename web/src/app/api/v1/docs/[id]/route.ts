@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { sanitizeRichText } from "@/lib/sanitize";
+import { linkEmbeddedFiles } from "@/lib/link-files";
 import {
   forbidden,
   internalError,
@@ -73,6 +74,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       },
       include: DOC_INCLUDE,
     });
+    await linkEmbeddedFiles(doc.content, { clientId: doc.clientId });
     await logActivity({
       actorId: user.id,
       entityType: "doc",

@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notify";
 import { sanitizeRichText } from "@/lib/sanitize";
+import { linkEmbeddedFiles } from "@/lib/link-files";
 import {
   fail,
   forbidden,
@@ -67,10 +68,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (!existing) return notFound("Task");
 
     // portal users may touch only their own client's tasks, and never the
-    // workflow fields — status/progress stay with the team
+    // workflow fields — with ONE exception: reopening a completed task
     if (user.clientId) {
       if (existing.clientId !== user.clientId) return forbidden();
-      delete data.status;
+      if (data.status && existing.status === "DONE" && data.status !== "DONE") {
+        data.status = "TODO"; // reopen always lands back in To Do
+      } else {
+        delete data.status;
+      }
       delete data.progress;
       delete data.actualHours;
       delete data.boardOrder;
@@ -148,18 +153,25 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       include: TASK_INCLUDE,
     });
 
+    await linkEmbeddedFiles(data.description ?? null, {
+      taskId: id,
+      clientId: existing.clientId,
+    });
+
+    const statusChanged = data.status && data.status !== existing.status;
+    const reopened = statusChanged && existing.status === "DONE";
     await logActivity({
       actorId: user.id,
       entityType: "task",
       entityId: id,
-      action:
-        data.status && data.status !== existing.status
-          ? "status_changed"
-          : "updated",
-      meta:
-        data.status && data.status !== existing.status
-          ? { number: existing.number, from: existing.status, to: data.status }
-          : { number: existing.number, fields: Object.keys(parsed.data) },
+      action: statusChanged
+        ? reopened
+          ? "reopened"
+          : "status_changed"
+        : "updated",
+      meta: statusChanged
+        ? { number: existing.number, from: existing.status, to: data.status }
+        : { number: existing.number, fields: Object.keys(parsed.data) },
     });
 
     if (assigneesChanged && nextIds) {
@@ -173,7 +185,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         link: `/tasks/${id}`,
       });
     }
-    if (data.status && data.status !== existing.status) {
+    if (statusChanged) {
       await notify({
         userIds: [
           ...existing.assignees.map((a) => a.userId),
@@ -181,7 +193,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         ],
         actorId: user.id,
         type: "task_status",
-        title: `ODG-${existing.number} is now ${data.status.replace("_", " ").toLowerCase()}`,
+        title: reopened
+          ? `${user.name} reopened ODG-${existing.number}`
+          : `ODG-${existing.number} is now ${data.status!.replace("_", " ").toLowerCase()}`,
         body: existing.title,
         link: `/tasks/${id}`,
       });

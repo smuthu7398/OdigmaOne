@@ -58,6 +58,8 @@ function describe(a: ActivityRow): string {
   switch (`${a.entityType}:${a.action}`) {
     case "task:status_changed":
       return `moved ODG-${meta.number} from ${String(meta.from).replace("_", " ").toLowerCase()} to ${String(meta.to).replace("_", " ").toLowerCase()}`;
+    case "task:reopened":
+      return `reopened ODG-${meta.number}`;
     case "comment:created":
       return `commented on ODG-${meta.taskNumber}`;
     case "file:uploaded":

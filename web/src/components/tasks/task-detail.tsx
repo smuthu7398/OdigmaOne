@@ -155,7 +155,7 @@ export function TaskDetail({
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex flex-wrap items-start gap-3">
+      <div className="flex flex-wrap items-center gap-4">
         <BackButton href="/tasks" label="Back to tasks" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -179,12 +179,12 @@ export function TaskDetail({
               {task.project && ` · ${task.project.name}`}
             </p>
           </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight">
             {task.title}
           </h1>
         </div>
         {canEditTask && (
-          <Button asChild variant="outline" className="rounded-full">
+          <Button asChild variant="outline" className="self-center rounded-full">
             <Link href={`/tasks/${task.id}/edit`}>
               <Pencil /> Edit
             </Link>

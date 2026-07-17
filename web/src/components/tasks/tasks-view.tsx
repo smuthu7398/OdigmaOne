@@ -174,13 +174,12 @@ export function TasksView({
           <ViewSwitcher />
           {canCreate && (
             <Button
+              asChild
               className="rounded-full shadow-[0_4px_18px_-4px_var(--primary-glow)]"
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
             >
-              <Plus /> New Task
+              <Link href="/tasks/new">
+                <Plus /> New Task
+              </Link>
             </Button>
           )}
         </div>
@@ -298,14 +297,10 @@ export function TasksView({
               </p>
             </div>
             {canCreate && !hasFilters && (
-              <Button
-                className="rounded-full"
-                onClick={() => {
-                  setEditing(null);
-                  setFormOpen(true);
-                }}
-              >
-                <Plus /> Create Task
+              <Button asChild className="rounded-full">
+                <Link href="/tasks/new">
+                  <Plus /> Create Task
+                </Link>
               </Button>
             )}
           </div>

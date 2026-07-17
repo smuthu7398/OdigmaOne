@@ -66,7 +66,7 @@ export type TaskItem = {
   description: string | null;
   client: { id: string; name: string };
   project: { id: string; name: string } | null;
-  assignedTo: { id: string; name: string } | null;
+  assignees: { user: { id: string; name: string } }[];
   assignedBy: { id: string; name: string };
   _count?: { comments: number; attachments: number };
 };

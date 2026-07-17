@@ -14,7 +14,10 @@ export const createTaskSchema = z.object({
   category: z.string().max(100).optional(),
   priority: taskPrioritySchema.default("MEDIUM"),
   status: taskStatusSchema.default("TODO"),
-  assignedToId: z.string().optional(),
+  assigneeIds: z
+    .array(z.string())
+    .min(1, "Assign at least one person")
+    .max(10, "At most 10 assignees"),
   estimatedHours: z.coerce.number().min(0).max(9999).optional(),
   dueDate: z.coerce.date().optional(),
 });

@@ -22,6 +22,7 @@ type Params = { params: Promise<{ id: string }> };
 async function findScopedTask(id: string, clientId: string | null) {
   const task = await prisma.task.findFirst({
     where: { id, deletedAt: null },
+    include: { assignees: { select: { userId: true } } },
   });
   if (!task) return { task: null, scoped: false };
   if (clientId && task.clientId !== clientId) return { task, scoped: false };
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       meta: { taskNumber: task.number },
     });
     await notify({
-      userIds: [task.assignedToId, task.assignedById],
+      userIds: [...task.assignees.map((a) => a.userId), task.assignedById],
       actorId: user.id,
       type: "comment_added",
       title: `${user.name} commented on ODG-${task.number}`,

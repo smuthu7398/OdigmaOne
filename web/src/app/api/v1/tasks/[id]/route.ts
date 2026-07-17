@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notify";
 import {
+  fail,
   forbidden,
   internalError,
   notFound,
@@ -17,7 +18,9 @@ import type { Prisma } from "@/generated/prisma";
 const TASK_INCLUDE = {
   client: { select: { id: true, name: true } },
   project: { select: { id: true, name: true } },
-  assignedTo: { select: { id: true, name: true, image: true } },
+  assignees: {
+    include: { user: { select: { id: true, name: true, image: true } } },
+  },
   assignedBy: { select: { id: true, name: true } },
   _count: { select: { comments: true, attachments: true } },
 } satisfies Prisma.TaskInclude;
@@ -52,21 +55,32 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
   const parsed = updateTaskSchema.safeParse(body);
   if (!parsed.success) return validationError(parsed.error);
-  const data = parsed.data;
+  const { assigneeIds, ...data } = parsed.data;
 
   try {
     const existing = await prisma.task.findFirst({
       where: { id, deletedAt: null },
+      include: { assignees: true },
     });
     if (!existing) return notFound("Task");
 
+    const currentIds = existing.assignees.map((a) => a.userId).sort();
+    const nextIds = assigneeIds ? [...new Set(assigneeIds)].sort() : undefined;
+    const assigneesChanged =
+      nextIds !== undefined && nextIds.join(",") !== currentIds.join(",");
+
     // reassignment needs the assign permission
-    if (
-      data.assignedToId !== undefined &&
-      data.assignedToId !== existing.assignedToId &&
-      !user.permissions.has("task:assign")
-    ) {
+    if (assigneesChanged && !user.permissions.has("task:assign")) {
       return forbidden();
+    }
+    if (nextIds && assigneesChanged) {
+      const valid = await prisma.user.findMany({
+        where: { id: { in: nextIds }, isActive: true, clientId: null },
+        select: { id: true },
+      });
+      if (valid.length !== nextIds.length) {
+        return fail(400, "VALIDATION_ERROR", "Unknown assignee selected");
+      }
     }
 
     if (data.projectId) {
@@ -87,7 +101,17 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     const task = await prisma.task.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        ...(assigneesChanged && nextIds
+          ? {
+              assignees: {
+                deleteMany: {},
+                create: nextIds.map((userId) => ({ userId })),
+              },
+            }
+          : {}),
+      },
       include: TASK_INCLUDE,
     });
 
@@ -102,12 +126,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       meta:
         data.status && data.status !== existing.status
           ? { number: existing.number, from: existing.status, to: data.status }
-          : { number: existing.number, fields: Object.keys(data) },
+          : { number: existing.number, fields: Object.keys(parsed.data) },
     });
 
-    if (data.assignedToId && data.assignedToId !== existing.assignedToId) {
+    if (assigneesChanged && nextIds) {
+      const added = nextIds.filter((uid) => !currentIds.includes(uid));
       await notify({
-        userIds: [data.assignedToId],
+        userIds: added,
         actorId: user.id,
         type: "task_assigned",
         title: `${user.name} assigned you ODG-${existing.number}`,
@@ -117,7 +142,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
     if (data.status && data.status !== existing.status) {
       await notify({
-        userIds: [existing.assignedToId, existing.assignedById],
+        userIds: [
+          ...existing.assignees.map((a) => a.userId),
+          existing.assignedById,
+        ],
         actorId: user.id,
         type: "task_status",
         title: `ODG-${existing.number} is now ${data.status.replace("_", " ").toLowerCase()}`,

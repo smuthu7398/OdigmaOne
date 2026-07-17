@@ -31,10 +31,10 @@ model User {
   isActive Boolean @default(true)
   timezone String  @default("Asia/Kolkata")
 
-  sessions      Session[]
-  accounts      Account[]
-  tasksAssigned Task[]         @relation("TaskAssignee")
-  tasksCreated  Task[]         @relation("TaskAssigner")
+  sessions        Session[]
+  accounts        Account[]
+  taskAssignments TaskAssignee[]
+  tasksCreated    Task[]         @relation("TaskAssigner")
   comments      Comment[]
   attachments   Attachment[]
   workLogs      WorkLog[]
@@ -228,8 +228,7 @@ model Task {
   status         TaskStatus   @default(TODO)
   assignedById   String
   assignedBy     User         @relation("TaskAssigner", fields: [assignedById], references: [id])
-  assignedToId   String?
-  assignedTo     User?        @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  assignees      TaskAssignee[]
   estimatedHours Decimal?     @db.Decimal(6, 2)
   actualHours    Decimal?     @db.Decimal(6, 2)
   progress       Int          @default(0) // 0–100
@@ -246,10 +245,21 @@ model Task {
 
   @@index([clientId])
   @@index([projectId])
-  @@index([assignedToId])
   @@index([status])
   @@index([dueDate])
   @@map("task")
+}
+
+model TaskAssignee {
+  taskId     String
+  userId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@id([taskId, userId])
+  @@index([userId])
+  @@map("task_assignee")
 }
 
 model Comment {

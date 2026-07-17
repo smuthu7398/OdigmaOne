@@ -167,9 +167,15 @@ export default function TaskDetailScreen() {
                 </Text>
               </View>
               <View style={styles.metaItem}>
-                <Text style={styles.metaLabel}>Assignee</Text>
+                <Text style={styles.metaLabel}>
+                  Assignee{task.assignees.length > 1 ? "s" : ""}
+                </Text>
                 <Text style={styles.metaValue}>
-                  {task.assignedTo?.name.split(" ")[0] ?? "—"}
+                  {task.assignees.length > 0
+                    ? task.assignees
+                        .map((a) => a.user.name.split(" ")[0])
+                        .join(", ")
+                    : "—"}
                 </Text>
               </View>
               <View style={styles.metaItem}>

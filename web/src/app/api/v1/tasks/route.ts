@@ -6,6 +6,7 @@ import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notify";
 import {
   created,
+  fail,
   internalError,
   notFound,
   ok,
@@ -18,7 +19,9 @@ import type { Prisma } from "@/generated/prisma";
 const TASK_INCLUDE = {
   client: { select: { id: true, name: true } },
   project: { select: { id: true, name: true } },
-  assignedTo: { select: { id: true, name: true, image: true } },
+  assignees: {
+    include: { user: { select: { id: true, name: true, image: true } } },
+  },
   assignedBy: { select: { id: true, name: true } },
   _count: { select: { comments: true, attachments: true } },
 } satisfies Prisma.TaskInclude;
@@ -26,7 +29,7 @@ const TASK_INCLUDE = {
 const listQuerySchema = paginationQuerySchema.extend({
   clientId: z.string().optional(),
   projectId: z.string().optional(),
-  assignedToId: z.string().optional(),
+  assignedToId: z.string().optional(), // filters tasks having this assignee
   status: z
     .enum(["TODO", "IN_PROGRESS", "IN_REVIEW", "BLOCKED", "DONE"])
     .optional(),
@@ -74,7 +77,7 @@ export async function GET(request: NextRequest) {
       ...clientScope(user),
       ...(clientId && !user.clientId && { clientId }),
       ...(projectId && { projectId }),
-      ...(assignedToId && { assignedToId }),
+      ...(assignedToId && { assignees: { some: { userId: assignedToId } } }),
       ...(status && { status }),
       ...(priority && { priority }),
       ...(type && { type }),
@@ -134,15 +137,12 @@ export async function POST(request: NextRequest) {
   }
   const parsed = createTaskSchema.safeParse(body);
   if (!parsed.success) return validationError(parsed.error);
-  const data = parsed.data;
+  const { assigneeIds, ...data } = parsed.data;
 
   // portal users file requests for their own client only, always as To Do
   if (user.clientId) {
     data.clientId = user.clientId;
     data.status = "TODO";
-  }
-  if (data.assignedToId && !user.permissions.has("task:assign")) {
-    data.assignedToId = undefined;
   }
 
   try {
@@ -151,11 +151,6 @@ export async function POST(request: NextRequest) {
     });
     if (!client) return notFound("Client");
 
-    // client requests default to the client's account manager
-    if (user.clientId && !data.assignedToId && client.accountManagerId) {
-      data.assignedToId = client.accountManagerId;
-    }
-
     if (data.projectId) {
       const project = await prisma.project.findFirst({
         where: { id: data.projectId, clientId: data.clientId, deletedAt: null },
@@ -163,8 +158,23 @@ export async function POST(request: NextRequest) {
       if (!project) return notFound("Project (for this client)");
     }
 
+    // assignees must be active team members
+    const validAssignees = await prisma.user.findMany({
+      where: { id: { in: assigneeIds }, isActive: true, clientId: null },
+      select: { id: true },
+    });
+    if (validAssignees.length !== new Set(assigneeIds).size) {
+      return fail(400, "VALIDATION_ERROR", "Unknown assignee selected");
+    }
+
     const task = await prisma.task.create({
-      data: { ...data, assignedById: user.id },
+      data: {
+        ...data,
+        assignedById: user.id,
+        assignees: {
+          create: [...new Set(assigneeIds)].map((userId) => ({ userId })),
+        },
+      },
       include: TASK_INCLUDE,
     });
     await logActivity({
@@ -175,7 +185,7 @@ export async function POST(request: NextRequest) {
       meta: { number: task.number, title: task.title },
     });
     await notify({
-      userIds: [task.assignedToId],
+      userIds: assigneeIds,
       actorId: user.id,
       type: "task_assigned",
       title: user.clientId
@@ -188,7 +198,7 @@ export async function POST(request: NextRequest) {
     if (
       user.clientId &&
       client.accountManagerId &&
-      client.accountManagerId !== task.assignedToId
+      !assigneeIds.includes(client.accountManagerId)
     ) {
       await notify({
         userIds: [client.accountManagerId],

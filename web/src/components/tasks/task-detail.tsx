@@ -346,17 +346,24 @@ export function TaskDetail({
 
             <div className="grid gap-1.5">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Assignee
+                Assignees ({task.assignees.length})
               </p>
-              {task.assignedTo ? (
-                <span className="inline-flex items-center gap-2">
-                  <Avatar className="size-6">
-                    <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
-                      {initials(task.assignedTo.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  {task.assignedTo.name}
-                </span>
+              {task.assignees.length > 0 ? (
+                <div className="grid gap-1.5">
+                  {task.assignees.map((a) => (
+                    <span
+                      key={a.user.id}
+                      className="inline-flex items-center gap-2"
+                    >
+                      <Avatar className="size-6">
+                        <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
+                          {initials(a.user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {a.user.name}
+                    </span>
+                  ))}
+                </div>
               ) : (
                 <span className="text-muted-foreground">Unassigned</span>
               )}

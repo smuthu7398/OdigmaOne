@@ -49,7 +49,7 @@ type UserRow = {
   roleId: string | null;
   role: { id: string; name: string } | null;
   client: { id: string; name: string } | null;
-  _count: { tasksAssigned: number; workLogs: number };
+  _count: { taskAssignments: number; workLogs: number };
 };
 
 type RoleOption = { id: string; name: string };
@@ -265,7 +265,7 @@ export function TeamView({
                         {u.client?.name ?? "—"}
                       </TableCell>
                       <TableCell className="text-right text-sm tabular-nums">
-                        {u._count.tasksAssigned}
+                        {u._count.taskAssignments}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {formatDate(u.createdAt)}

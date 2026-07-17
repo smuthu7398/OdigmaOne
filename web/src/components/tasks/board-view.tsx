@@ -81,12 +81,19 @@ function TaskCard({
         <span className="ml-auto tabular-nums">
           {task.dueDate ? formatDate(task.dueDate).replace(/ \d{4}$/, "") : ""}
         </span>
-        {task.assignedTo && (
-          <Avatar className="size-5">
-            <AvatarFallback className="bg-primary/15 text-[9px] font-semibold text-primary">
-              {initials(task.assignedTo.name)}
-            </AvatarFallback>
-          </Avatar>
+        {task.assignees.length > 0 && (
+          <span
+            className="flex -space-x-1.5"
+            title={task.assignees.map((a) => a.user.name).join(", ")}
+          >
+            {task.assignees.slice(0, 3).map((a) => (
+              <Avatar key={a.user.id} className="size-5 ring-1 ring-card">
+                <AvatarFallback className="bg-primary/15 text-[9px] font-semibold text-primary">
+                  {initials(a.user.name)}
+                </AvatarFallback>
+              </Avatar>
+            ))}
+          </span>
         )}
       </div>
     </div>

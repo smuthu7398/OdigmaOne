@@ -53,7 +53,7 @@ export type TaskRow = {
   createdAt: string;
   client: { id: string; name: string };
   project: { id: string; name: string } | null;
-  assignedTo: { id: string; name: string; image: string | null } | null;
+  assignees: { user: { id: string; name: string; image: string | null } }[];
   assignedBy: { id: string; name: string };
   _count?: { comments: number; attachments: number };
 };
@@ -96,11 +96,14 @@ export function TaskFormDialog({
     enabled: open && !lockedClientId,
   });
 
+  // assignment is mandatory, so every creator picks people;
+  // canAssign only gates re-assignment when editing
   const usersQuery = useQuery({
     queryKey: ["users", "options"],
     queryFn: () => api<{ id: string; name: string }[]>("/api/v1/users"),
-    enabled: open && canAssign,
+    enabled: open,
   });
+  const assigneesLocked = isEdit && !canAssign;
 
   const {
     register,
@@ -136,7 +139,7 @@ export function TaskFormDialog({
         category: task?.category ?? undefined,
         priority: task?.priority ?? "MEDIUM",
         status: task?.status ?? "TODO",
-        assignedToId: task?.assignedTo?.id ?? undefined,
+        assigneeIds: task?.assignees.map((a) => a.user.id) ?? [],
         estimatedHours: task?.estimatedHours ?? undefined,
         dueDate: task?.dueDate?.slice(0, 10) ?? undefined,
       });
@@ -314,32 +317,51 @@ export function TaskFormDialog({
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            {canAssign && (
-              <div className="grid gap-2">
-                <Label>{lockedClientId ? "Assign to (optional)" : "Assignee"}</Label>
-                <Select
-                  value={watch("assignedToId") ?? NONE}
-                  onValueChange={(v) =>
-                    setValue("assignedToId", v === NONE ? undefined : v)
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Unassigned" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>
-                      {lockedClientId ? "Your account manager" : "Unassigned"}
-                    </SelectItem>
-                    {(usersQuery.data?.data ?? []).map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid gap-2">
+            <Label>
+              Assign to * {assigneesLocked && "(needs assign permission)"}
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {(usersQuery.data?.data ?? []).map((u) => {
+                const selected = (watch("assigneeIds") ?? []).includes(u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    disabled={assigneesLocked}
+                    onClick={() => {
+                      const current = watch("assigneeIds") ?? [];
+                      setValue(
+                        "assigneeIds",
+                        selected
+                          ? current.filter((id) => id !== u.id)
+                          : [...current, u.id],
+                        { shouldValidate: true }
+                      );
+                    }}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      selected
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                    } ${assigneesLocked ? "cursor-not-allowed opacity-60" : ""}`}
+                  >
+                    {selected ? "✓ " : ""}
+                    {u.name}
+                  </button>
+                );
+              })}
+              {usersQuery.isLoading && (
+                <span className="text-xs text-muted-foreground">Loading…</span>
+              )}
+            </div>
+            {errors.assigneeIds && (
+              <p className="text-sm text-destructive">
+                {errors.assigneeIds.message}
+              </p>
             )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="dueDate">Due date</Label>
               <Input id="dueDate" type="date" {...register("dueDate")} />

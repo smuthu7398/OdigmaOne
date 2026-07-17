@@ -392,14 +392,30 @@ export function TasksView({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {task.assignedTo ? (
-                          <span className="inline-flex items-center gap-2 text-sm">
-                            <Avatar className="size-6">
-                              <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
-                                {initials(task.assignedTo.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            {task.assignedTo.name.split(" ")[0]}
+                        {task.assignees.length > 0 ? (
+                          <span
+                            className="inline-flex items-center"
+                            title={task.assignees
+                              .map((a) => a.user.name)
+                              .join(", ")}
+                          >
+                            <span className="flex -space-x-2">
+                              {task.assignees.slice(0, 3).map((a) => (
+                                <Avatar
+                                  key={a.user.id}
+                                  className="size-6 ring-2 ring-card"
+                                >
+                                  <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
+                                    {initials(a.user.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              ))}
+                            </span>
+                            <span className="ml-2 text-sm">
+                              {task.assignees.length === 1
+                                ? task.assignees[0].user.name.split(" ")[0]
+                                : `${task.assignees.length} people`}
+                            </span>
                           </span>
                         ) : (
                           <span className="text-sm text-muted-foreground">

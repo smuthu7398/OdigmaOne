@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         roleId: true,
         role: { select: { id: true, name: true } },
         client: { select: { id: true, name: true } },
-        _count: { select: { tasksAssigned: true, workLogs: true } },
+        _count: { select: { taskAssignments: true, workLogs: true } },
       },
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
     });

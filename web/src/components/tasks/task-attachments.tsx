@@ -148,31 +148,16 @@ export function TaskAttachments({
           Attachments ({files.length})
         </CardTitle>
         {canUpload && (
-          <>
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files?.length) uploadAll(e.target.files);
-                e.target.value = "";
-              }}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto rounded-full"
-              onClick={() => inputRef.current?.click()}
-            >
-              {uploads.length > 0 ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Upload />
-              )}
-              Upload
-            </Button>
-          </>
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.length) uploadAll(e.target.files);
+              e.target.value = "";
+            }}
+          />
         )}
       </CardHeader>
       <CardContent className="grid gap-2">
@@ -224,19 +209,33 @@ export function TaskAttachments({
           <Skeleton className="h-12" />
         ) : files.length === 0 && uploads.length === 0 ? (
           canUpload ? (
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="grid w-full justify-items-center gap-2 rounded-xl border border-dashed py-8 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03]"
-            >
-              <UploadCloud className="size-6 text-muted-foreground" />
-              <span className="text-sm font-medium">
-                Drag &amp; drop files here
-              </span>
-              <span className="text-xs text-muted-foreground">
-                or click to browse — any format, up to 25 MB each
-              </span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="grid w-full justify-items-center gap-2 rounded-xl border border-dashed py-8 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03]"
+              >
+                <UploadCloud className="size-6 text-muted-foreground" />
+                <span className="text-sm font-medium">
+                  Drag &amp; drop files here
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  or click to browse — any format, up to 25 MB each
+                </span>
+              </button>
+              <Button
+                variant="outline"
+                className="w-full rounded-full"
+                onClick={() => inputRef.current?.click()}
+              >
+                {uploads.length > 0 ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Upload />
+                )}
+                Upload
+              </Button>
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">
               No files yet — screenshots and documents attached to this task
@@ -287,17 +286,31 @@ export function TaskAttachments({
             ))}
           </ul>
           {canUpload && (
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed py-3 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/[0.03] hover:text-foreground"
-            >
-              <UploadCloud className="size-3.5" />
-              <span>
-                <span className="font-medium">Drag &amp; drop</span> files here,
-                or click to browse
-              </span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed py-3 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/[0.03] hover:text-foreground"
+              >
+                <UploadCloud className="size-3.5" />
+                <span>
+                  <span className="font-medium">Drag &amp; drop</span> files
+                  here, or click to browse
+                </span>
+              </button>
+              <Button
+                variant="outline"
+                className="w-full rounded-full"
+                onClick={() => inputRef.current?.click()}
+              >
+                {uploads.length > 0 ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Upload />
+                )}
+                Upload
+              </Button>
+            </>
           )}
           </>
         )}

@@ -25,6 +25,7 @@ import {
   SquareCode,
   Strikethrough,
   Undo2,
+  UploadCloud,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -99,6 +100,9 @@ export function RichTextEditor({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  // dragenter/leave fire for children too — count to avoid flicker
+  const dragDepth = useRef(0);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -176,7 +180,44 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl bg-muted/40 ring-border transition-shadow focus-within:ring-1">
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-xl bg-muted/40 ring-border transition-shadow focus-within:ring-1",
+        dragging && "ring-2 ring-primary/60"
+      )}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        dragDepth.current += 1;
+        setDragging(true);
+      }}
+      onDragOver={(e) => e.preventDefault()}
+      onDragLeave={() => {
+        dragDepth.current -= 1;
+        if (dragDepth.current <= 0) {
+          dragDepth.current = 0;
+          setDragging(false);
+        }
+      }}
+      onDrop={(e) => {
+        dragDepth.current = 0;
+        setDragging(false);
+        // ProseMirror's handleDrop already claimed drops inside the text area
+        if (e.defaultPrevented) return;
+        const files = Array.from(e.dataTransfer?.files ?? []);
+        if (files.length > 0) {
+          e.preventDefault();
+          files.forEach(insertFile);
+        }
+      }}
+    >
+      {dragging && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-primary/5 backdrop-blur-[1px]">
+          <span className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg">
+            <UploadCloud className="size-4" />
+            Drop files to attach
+          </span>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border/60 px-2 py-1.5">
         <ToolbarButton
           label="Bold"
@@ -294,6 +335,20 @@ export function RichTextEditor({
       </div>
 
       <EditorContent editor={editor} />
+
+      <div className="px-2 pb-2">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border/80 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/[0.03] hover:text-foreground"
+        >
+          <UploadCloud className="size-3.5" />
+          <span>
+            <span className="font-medium">Drag &amp; drop</span> files or
+            screenshots here, or click to browse
+          </span>
+        </button>
+      </div>
 
       <input
         ref={imageInputRef}

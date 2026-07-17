@@ -35,14 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { type TaskRow } from "./task-form";
 import { TaskAttachments } from "./task-attachments";
 import { BackButton } from "@/components/back-button";
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-      {children}
-    </p>
-  );
-}
+import { SectionLabel } from "@/components/section-label";
 
 type CommentRow = {
   id: string;

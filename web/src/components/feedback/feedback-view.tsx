@@ -114,7 +114,7 @@ export function FeedbackView({
       {canSubmit && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Share feedback</CardTitle>
+            <CardTitle className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Share feedback</CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -170,6 +170,7 @@ export function FeedbackView({
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
+                  className="min-h-20 border-0 bg-muted/40 p-4 shadow-none focus-visible:ring-1"
                   placeholder="What's working well? What should we improve?"
                 />
               </div>

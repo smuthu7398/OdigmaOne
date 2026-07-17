@@ -128,7 +128,7 @@ export function ReportsView() {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Tasks by status</CardTitle>
+                <CardTitle className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Tasks by status</CardTitle>
               </CardHeader>
               <CardContent>
                 {data.tasksByStatus.length === 0 ? (
@@ -184,7 +184,7 @@ export function ReportsView() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Tasks per client</CardTitle>
+                <CardTitle className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Tasks per client</CardTitle>
               </CardHeader>
               <CardContent>
                 {data.tasksByClient.length === 0 ? (
@@ -219,7 +219,7 @@ export function ReportsView() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">
+              <CardTitle className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Timesheet{" "}
                 <span className="font-normal text-muted-foreground">
                   ({from} → {to}, from daily work logs)

@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SectionLabel } from "@/components/section-label";
 
 export type TaskRow = {
   id: string;
@@ -61,14 +62,6 @@ const taskFormSchema = createTaskSchema
 type TaskFormValues = z.input<typeof taskFormSchema>;
 
 const NONE = "__none__";
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-      {children}
-    </p>
-  );
-}
 
 /** The task form — a two-column composition: the work itself on the left,
  *  routing details on the right. Used by /tasks/new and /tasks/:id/edit. */

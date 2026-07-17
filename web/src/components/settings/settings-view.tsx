@@ -69,7 +69,7 @@ export function SettingsView({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Profile</CardTitle>
+          <CardTitle className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Profile</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <Avatar className="size-14">
@@ -96,7 +96,7 @@ export function SettingsView({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Change password</CardTitle>
+          <CardTitle className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Change password</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={changePassword} className="grid gap-4">

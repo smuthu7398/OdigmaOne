@@ -2,43 +2,25 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { toast } from "sonner";
 import {
   ChevronLeft,
   ChevronRight,
   Clock,
   Loader2,
-  Plus,
+  SendHorizonal,
   Trash2,
 } from "lucide-react";
-import { z } from "zod";
-import { createWorkLogSchema } from "@odigma/shared";
 import { api } from "@/lib/fetcher";
 import { initials, taskCode } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SectionLabel } from "@/components/section-label";
 
 type WorkLogRow = {
   id: string;
@@ -51,9 +33,7 @@ type WorkLogRow = {
   client: { id: string; name: string } | null;
 };
 
-type WorkLogFormValues = z.input<typeof createWorkLogSchema>;
-
-const NONE = "__none__";
+type TaskOption = { id: string; number: number; title: string };
 
 function todayIST() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(
@@ -78,7 +58,9 @@ export function WorkLogView({
 }) {
   const queryClient = useQueryClient();
   const [date, setDate] = useState(todayIST());
-  const [formOpen, setFormOpen] = useState(false);
+  const [description, setDescription] = useState("");
+  const [hours, setHours] = useState("");
+  const [taskId, setTaskId] = useState<string | null>(null);
   const isToday = date === todayIST();
 
   const query = useQuery({
@@ -90,39 +72,34 @@ export function WorkLogView({
   });
 
   const tasksQuery = useQuery({
-    queryKey: ["tasks", "options"],
+    queryKey: ["tasks", "log-options"],
     queryFn: () =>
-      api<{ id: string; number: number; title: string }[]>(
-        "/api/v1/tasks?pageSize=100&sort=-createdAt"
-      ),
-    enabled: formOpen,
+      api<TaskOption[]>("/api/v1/tasks?pageSize=10&sort=-createdAt"),
+    enabled: canCreate,
   });
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<WorkLogFormValues>({
-    resolver: standardSchemaResolver(createWorkLogSchema),
-  });
+  const canSubmit =
+    description.trim().length > 0 &&
+    Number(hours) >= 0.25 &&
+    Number(hours) <= 24;
 
   const createMutation = useMutation({
-    mutationFn: (values: WorkLogFormValues) => {
-      const payload = Object.fromEntries(
-        Object.entries(values).filter(([, v]) => v !== "" && v !== undefined)
-      );
-      return api("/api/v1/work-logs", {
+    mutationFn: () =>
+      api("/api/v1/work-logs", {
         method: "POST",
-        body: JSON.stringify(payload),
-      });
-    },
+        body: JSON.stringify({
+          workDate: date,
+          description: description.trim(),
+          hours: Number(hours),
+          ...(taskId ? { taskId } : {}),
+        }),
+      }),
     onSuccess: () => {
       toast.success("Work logged.");
+      setDescription("");
+      setHours("");
+      setTaskId(null);
       queryClient.invalidateQueries({ queryKey: ["work-logs"] });
-      setFormOpen(false);
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -141,7 +118,7 @@ export function WorkLogView({
   const totalHours = query.data?.data.totalHours ?? 0;
 
   return (
-    <div className="grid gap-5">
+    <div className="mx-auto grid w-full max-w-3xl gap-5">
       <div className="flex flex-wrap items-center gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Work Log</h1>
@@ -149,24 +126,17 @@ export function WorkLogView({
             {canSeeOthers ? "Team's daily updates" : "Your daily updates"}
           </p>
         </div>
-        {canCreate && (
-          <Button
-            className="ml-auto rounded-full shadow-[0_4px_18px_-4px_var(--primary-glow)]"
-            onClick={() => {
-              reset({ workDate: date, description: "", hours: undefined });
-              setFormOpen(true);
-            }}
-          >
-            <Plus /> Log Work
-          </Button>
-        )}
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1.5 text-sm font-semibold text-primary tabular-nums">
+          <Clock className="size-3.5" />
+          {totalHours}h logged
+        </span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant="outline"
           size="icon"
-          className="rounded-full"
+          className="rounded-full bg-card shadow-sm"
           onClick={() => setDate((d) => shiftDate(d, -1))}
           aria-label="Previous day"
         >
@@ -176,12 +146,12 @@ export function WorkLogView({
           type="date"
           value={date}
           onChange={(e) => e.target.value && setDate(e.target.value)}
-          className="w-40"
+          className="w-40 bg-card"
         />
         <Button
           variant="outline"
           size="icon"
-          className="rounded-full"
+          className="rounded-full bg-card shadow-sm"
           onClick={() => setDate((d) => shiftDate(d, 1))}
           disabled={isToday}
           aria-label="Next day"
@@ -197,14 +167,78 @@ export function WorkLogView({
             Today
           </Button>
         )}
-        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary tabular-nums">
-          <Clock className="size-3.5" />
-          {totalHours}h logged
-        </span>
       </div>
 
+      {canCreate && (
+        <Card>
+          <CardContent className="grid gap-4">
+            <SectionLabel>
+              What did you work on {isToday ? "today" : "this day"}?
+            </SectionLabel>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="min-h-20 border-0 bg-muted/40 p-4 shadow-none focus-visible:ring-1"
+              placeholder="e.g. Finalized the launch-offer banner and shared for review"
+            />
+            <div className="grid gap-2">
+              <SectionLabel>Link a task (optional)</SectionLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {(tasksQuery.data?.data ?? []).map((t) => {
+                  const active = taskId === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      title={t.title}
+                      onClick={() => setTaskId(active ? null : t.id)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 font-mono text-xs font-semibold transition-colors",
+                        active
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                      )}
+                    >
+                      {taskCode(t.number)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.25"
+                min="0.25"
+                max="24"
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+                placeholder="Hours"
+                className="w-28"
+              />
+              <Button
+                className="rounded-full px-5 shadow-[0_4px_18px_-4px_var(--primary-glow)]"
+                disabled={!canSubmit || createMutation.isPending}
+                onClick={() => createMutation.mutate()}
+              >
+                {createMutation.isPending ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <SendHorizonal className="size-4" />
+                )}
+                Log it
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
-        <CardContent>
+        <CardContent className="grid gap-4">
+          <SectionLabel>
+            {isToday ? "Today's entries" : `Entries · ${date}`} ({logs.length})
+          </SectionLabel>
           {query.isLoading ? (
             <div className="grid gap-3">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -212,36 +246,22 @@ export function WorkLogView({
               ))}
             </div>
           ) : logs.length === 0 ? (
-            <div className="grid justify-items-center gap-3 py-10 text-center">
+            <div className="grid justify-items-center gap-3 py-8 text-center">
               <div className="rounded-2xl bg-primary/10 p-3">
                 <Clock className="size-5 text-primary" />
               </div>
-              <div>
-                <p className="font-medium">Nothing logged for this day</p>
-                <p className="text-sm text-muted-foreground">
-                  {isToday
-                    ? "What did you work on? Log it before it slips away."
-                    : "No entries were made on this date."}
-                </p>
-              </div>
-              {canCreate && isToday && (
-                <Button
-                  className="rounded-full"
-                  onClick={() => {
-                    reset({ workDate: date, description: "" });
-                    setFormOpen(true);
-                  }}
-                >
-                  <Plus /> Log Work
-                </Button>
-              )}
+              <p className="text-sm text-muted-foreground">
+                {isToday
+                  ? "Nothing logged yet — what did you work on?"
+                  : "No entries were made on this date."}
+              </p>
             </div>
           ) : (
-            <ul className="grid gap-3">
+            <ul className="grid gap-2.5">
               {logs.map((log) => (
                 <li
                   key={log.id}
-                  className="flex gap-3 rounded-lg border px-4 py-3"
+                  className="flex gap-3 rounded-xl bg-muted/40 px-4 py-3"
                 >
                   <Avatar className="mt-0.5 size-8">
                     <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
@@ -269,7 +289,7 @@ export function WorkLogView({
                     </p>
                   </div>
                   <div className="flex items-start gap-1">
-                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold tabular-nums">
+                    <span className="rounded-full bg-card px-2.5 py-0.5 text-xs font-semibold tabular-nums shadow-sm">
                       {Number(log.hours)}h
                     </span>
                     {log.userId === currentUserId && (
@@ -290,111 +310,6 @@ export function WorkLogView({
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Log work</DialogTitle>
-            <DialogDescription>
-              A short note on what you did — linked to a task if there is one.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={handleSubmit((v) => createMutation.mutate(v))}
-            className="grid gap-4"
-            noValidate
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="workDate">Date *</Label>
-                <Input id="workDate" type="date" {...register("workDate")} />
-                {errors.workDate && (
-                  <p className="text-sm text-destructive">
-                    {errors.workDate.message}
-                  </p>
-                )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="hours">Hours *</Label>
-                <Input
-                  id="hours"
-                  type="number"
-                  step="0.25"
-                  min="0.25"
-                  max="24"
-                  placeholder="e.g. 2.5"
-                  aria-invalid={!!errors.hours}
-                  {...register("hours")}
-                />
-                {errors.hours && (
-                  <p className="text-sm text-destructive">
-                    {errors.hours.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Task (optional)</Label>
-              <Select
-                value={watch("taskId") ?? NONE}
-                onValueChange={(v) =>
-                  setValue("taskId", v === NONE ? undefined : v)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="No task" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>No task</SelectItem>
-                  {(tasksQuery.data?.data ?? []).map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {taskCode(t.number)} — {t.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="description">What did you do? *</Label>
-              <Textarea
-                id="description"
-                rows={3}
-                placeholder="e.g. Fixed the webhook field mapping and redeployed to staging"
-                aria-invalid={!!errors.description}
-                {...register("description")}
-              />
-              {errors.description && (
-                <p className="text-sm text-destructive">
-                  {errors.description.message}
-                </p>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-full"
-                onClick={() => setFormOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="rounded-full"
-              >
-                {createMutation.isPending && (
-                  <Loader2 className="animate-spin" />
-                )}
-                Log it
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

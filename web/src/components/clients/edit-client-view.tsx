@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/fetcher";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientForm, type ClientRow } from "./client-form";
 import { BackButton } from "@/components/back-button";
@@ -21,7 +20,7 @@ export function EditClientView({ clientId }: { clientId: string }) {
 
   if (clientQuery.isLoading) {
     return (
-      <div className="mx-auto grid w-full max-w-2xl gap-5">
+      <div className="mx-auto grid w-full max-w-5xl gap-5">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-96 rounded-xl" />
       </div>
@@ -43,7 +42,7 @@ export function EditClientView({ clientId }: { clientId: string }) {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-2xl gap-5">
+    <div className="mx-auto grid w-full max-w-5xl gap-5">
       <div className="flex items-center gap-3">
         <BackButton href="/clients" label="Back to clients" />
         <div>
@@ -58,15 +57,11 @@ export function EditClientView({ clientId }: { clientId: string }) {
         </div>
       </div>
 
-      <Card>
-        <CardContent>
-          <ClientForm
+      <ClientForm
             client={client}
             onDone={() => router.push("/clients")}
             onCancel={() => router.push("/clients")}
           />
-        </CardContent>
-      </Card>
     </div>
   );
 }

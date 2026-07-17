@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ClientForm } from "./client-form";
 import { BackButton } from "@/components/back-button";
 
@@ -12,7 +11,7 @@ export function NewClientView() {
   const router = useRouter();
 
   return (
-    <div className="mx-auto grid w-full max-w-2xl gap-5">
+    <div className="mx-auto grid w-full max-w-5xl gap-5">
       <div className="flex items-center gap-3">
         <BackButton href="/clients" label="Back to clients" />
         <div>
@@ -23,15 +22,11 @@ export function NewClientView() {
         </div>
       </div>
 
-      <Card>
-        <CardContent>
-          <ClientForm
+      <ClientForm
             client={null}
             onDone={() => router.push("/clients")}
             onCancel={() => router.push("/clients")}
           />
-        </CardContent>
-      </Card>
     </div>
   );
 }

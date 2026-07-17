@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ProjectForm } from "./project-form";
 import { BackButton } from "@/components/back-button";
 
@@ -16,7 +15,7 @@ export function NewProjectView({
   const router = useRouter();
 
   return (
-    <div className="mx-auto grid w-full max-w-2xl gap-5">
+    <div className="mx-auto grid w-full max-w-5xl gap-5">
       <div className="flex items-center gap-3">
         <BackButton href="/projects" label="Back to projects" />
         <div>
@@ -29,16 +28,12 @@ export function NewProjectView({
         </div>
       </div>
 
-      <Card>
-        <CardContent>
-          <ProjectForm
+      <ProjectForm
             project={null}
             lockedClientId={lockedClientId}
             onDone={() => router.push("/projects")}
             onCancel={() => router.push("/projects")}
           />
-        </CardContent>
-      </Card>
     </div>
   );
 }

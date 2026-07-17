@@ -4,14 +4,16 @@ import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { AtSign, Loader2, Phone } from "lucide-react";
 import { z } from "zod";
 import { createClientSchema, type ClientStatus } from "@odigma/shared";
 import { api } from "@/lib/fetcher";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { SectionLabel } from "@/components/section-label";
 import {
   Select,
   SelectContent,
@@ -38,14 +40,13 @@ type ClientFormValues = z.input<typeof createClientSchema>;
 
 const NONE = "__none__";
 
-const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = [
-  { value: "ACTIVE", label: "Active" },
-  { value: "INACTIVE", label: "Inactive" },
-  { value: "ARCHIVED", label: "Archived" },
+const STATUS_META: { value: ClientStatus; label: string; badge: string }[] = [
+  { value: "ACTIVE", label: "Active", badge: "bg-status-done/15 text-status-done" },
+  { value: "INACTIVE", label: "Inactive", badge: "bg-status-todo/15 text-status-todo" },
+  { value: "ARCHIVED", label: "Archived", badge: "bg-muted text-muted-foreground" },
 ];
 
-/** Shared client form — full page for create (/clients/new) and edit
- *  (/clients/:id/edit). Mount it fresh; it initializes from `client`. */
+/** Shared client form — two-column like the task form. */
 export function ClientForm({
   client,
   onDone,
@@ -82,6 +83,8 @@ export function ClientForm({
     },
   });
 
+  const status = watch("status");
+
   const mutation = useMutation({
     mutationFn: (values: ClientFormValues) => {
       const payload = Object.fromEntries(
@@ -113,96 +116,135 @@ export function ClientForm({
       className="grid gap-4"
       noValidate
     >
-      <div className="grid gap-2">
-        <Label htmlFor="name">Client name *</Label>
-        <Input
-          id="name"
-          placeholder="e.g. TVS Emerald"
-          aria-invalid={!!errors.name}
-          {...register("name")}
-        />
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
-        )}
+      <div className="grid items-start gap-4 lg:grid-cols-[1fr_330px]">
+        {/* ——— the client ——— */}
+        <Card>
+          <CardContent className="grid gap-5">
+            <div className="grid gap-1.5">
+              <input
+                placeholder="Client name — e.g. TVS Emerald"
+                aria-invalid={!!errors.name}
+                className="w-full border-0 bg-transparent text-2xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
+                {...register("name")}
+              />
+              <div
+                className={cn(
+                  "h-px w-full",
+                  errors.name ? "bg-destructive" : "bg-border"
+                )}
+              />
+              {errors.name && (
+                <p className="text-sm text-destructive">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <SectionLabel>Company</SectionLabel>
+              <Input
+                placeholder="Legal / full company name"
+                {...register("companyName")}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <SectionLabel>Notes</SectionLabel>
+              <Textarea
+                rows={5}
+                className="min-h-28 resize-y border-0 bg-muted/40 p-4 shadow-none focus-visible:ring-1"
+                placeholder="Contract details, preferences, anything the team should know…"
+                {...register("notes")}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ——— details ——— */}
+        <Card className="lg:sticky lg:top-20">
+          <CardContent className="grid gap-5">
+            <div className="grid gap-2">
+              <SectionLabel>Status</SectionLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {STATUS_META.map((s) => {
+                  const active = status === s.value;
+                  return (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => setValue("status", s.value)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
+                        s.badge,
+                        active
+                          ? "ring-2 ring-current"
+                          : "opacity-45 hover:opacity-100"
+                      )}
+                    >
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <SectionLabel>
+                <AtSign className="mr-1 inline size-3" />
+                Email
+              </SectionLabel>
+              <Input
+                type="email"
+                placeholder="contact@company.com"
+                aria-invalid={!!errors.email}
+                {...register("email", {
+                  setValueAs: (v) => (v === "" ? undefined : v),
+                })}
+              />
+              {errors.email && (
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <SectionLabel>
+                <Phone className="mr-1 inline size-3" />
+                Phone
+              </SectionLabel>
+              <Input placeholder="+91 …" {...register("phone")} />
+            </div>
+
+            <div className="grid gap-2">
+              <SectionLabel>Account Manager</SectionLabel>
+              <Select
+                value={watch("accountManagerId") ?? NONE}
+                onValueChange={(v) =>
+                  setValue("accountManagerId", v === NONE ? null : v)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Who owns this client?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>No account manager</SelectItem>
+                  {(usersQuery.data?.data ?? []).map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Notified of every request this client files.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="companyName">Company</Label>
-          <Input id="companyName" {...register("companyName")} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="status">Status</Label>
-          <Select
-            value={watch("status")}
-            onValueChange={(v) => setValue("status", v as ClientStatus)}
-          >
-            <SelectTrigger id="status" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            aria-invalid={!!errors.email}
-            {...register("email", {
-              setValueAs: (v) => (v === "" ? undefined : v),
-            })}
-          />
-          {errors.email && (
-            <p className="text-sm text-destructive">{errors.email.message}</p>
-          )}
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" {...register("phone")} />
-        </div>
-      </div>
-
-      <div className="grid gap-2">
-        <Label>Account Manager</Label>
-        <Select
-          value={watch("accountManagerId") ?? NONE}
-          onValueChange={(v) =>
-            setValue("accountManagerId", v === NONE ? null : v)
-          }
-        >
-          <SelectTrigger className="w-full max-w-sm">
-            <SelectValue placeholder="Who owns this client?" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>No account manager</SelectItem>
-            {(usersQuery.data?.data ?? []).map((u) => (
-              <SelectItem key={u.id} value={u.id}>
-                {u.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          The account manager is notified of every request this client files.
-        </p>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" rows={3} {...register("notes")} />
-      </div>
-
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex items-center justify-end gap-2">
         <Button
           type="button"
           variant="outline"
@@ -214,7 +256,7 @@ export function ClientForm({
         <Button
           type="submit"
           disabled={mutation.isPending}
-          className="rounded-full shadow-[0_4px_18px_-4px_var(--primary-glow)]"
+          className="rounded-full px-6 shadow-[0_4px_18px_-4px_var(--primary-glow)]"
         >
           {mutation.isPending && <Loader2 className="animate-spin" />}
           {isEdit ? "Save changes" : "Create client"}

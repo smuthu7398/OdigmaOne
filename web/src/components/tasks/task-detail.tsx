@@ -218,13 +218,6 @@ export function TaskDetail({
             </CardContent>
           </Card>
 
-          <TaskAttachments
-            taskId={taskId}
-            currentUserId={currentUserId}
-            canUpload={canComment /* same audience: team + portal */}
-            canModerate={canModerate}
-          />
-
           <Card>
             <CardContent className="grid gap-4">
               <SectionLabel>Comments ({comments.length})</SectionLabel>
@@ -308,6 +301,13 @@ export function TaskDetail({
               )}
             </CardContent>
           </Card>
+
+          <TaskAttachments
+            taskId={taskId}
+            currentUserId={currentUserId}
+            canUpload={canComment /* same audience: team + portal */}
+            canModerate={canModerate}
+          />
         </div>
 
         <Card className="lg:sticky lg:top-20">

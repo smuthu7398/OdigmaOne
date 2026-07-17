@@ -82,22 +82,29 @@ function TaskCard({ task, dragging }: { task: TaskRow; dragging?: boolean }) {
         {task.title}
       </Link>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span className="truncate">{task.client.name}</span>
-        <span className="ml-auto tabular-nums">
-          {task.dueDate ? formatDate(task.dueDate).replace(/ \d{4}$/, "") : ""}
-        </span>
+        <span className="min-w-0 flex-1 truncate">{task.client.name}</span>
+        {task.dueDate && (
+          <span className="shrink-0 whitespace-nowrap tabular-nums">
+            {formatDate(task.dueDate).replace(/ \d{4}$/, "")}
+          </span>
+        )}
         {task.assignees.length > 0 && (
           <span
-            className="flex -space-x-1.5"
+            className="flex shrink-0 -space-x-1.5"
             title={task.assignees.map((a) => a.user.name).join(", ")}
           >
-            {task.assignees.slice(0, 3).map((a) => (
+            {task.assignees.slice(0, 2).map((a) => (
               <Avatar key={a.user.id} className="size-5 ring-1 ring-card">
                 <AvatarFallback className="bg-primary/15 text-[9px] font-semibold text-primary">
                   {initials(a.user.name)}
                 </AvatarFallback>
               </Avatar>
             ))}
+            {task.assignees.length > 2 && (
+              <span className="z-10 flex size-5 items-center justify-center rounded-full bg-muted text-[9px] font-semibold ring-1 ring-card">
+                +{task.assignees.length - 2}
+              </span>
+            )}
           </span>
         )}
       </div>

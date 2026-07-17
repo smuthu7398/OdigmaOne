@@ -75,6 +75,7 @@ export function TasksView({
   canAssign,
   isPortal,
   portalClientId,
+  currentUserId,
 }: {
   canCreate: boolean;
   canUpdate: boolean;
@@ -82,7 +83,12 @@ export function TasksView({
   canAssign: boolean;
   isPortal: boolean;
   portalClientId?: string | null;
+  currentUserId: string;
 }) {
+  // status stays with the team; clients edit only their own submissions
+  const canChangeStatus = canUpdate && !isPortal;
+  const canEditTask = (task: TaskRow) =>
+    canUpdate && (!isPortal || task.assignedBy.id === currentUserId);
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
@@ -350,7 +356,7 @@ export function TasksView({
                         </p>
                       </TableCell>
                       <TableCell>
-                        {canUpdate ? (
+                        {canChangeStatus ? (
                           <Select
                             value={task.status}
                             onValueChange={(v) =>
@@ -436,37 +442,39 @@ export function TasksView({
                       </TableCell>
                       {(canUpdate || canDelete) && (
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                aria-label="Task actions"
-                              >
-                                <MoreHorizontal className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {canUpdate && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setEditing(task);
-                                    setFormOpen(true);
-                                  }}
+                          {(canEditTask(task) || canDelete) && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label="Task actions"
                                 >
-                                  <Pencil /> Edit
-                                </DropdownMenuItem>
-                              )}
-                              {canDelete && (
-                                <DropdownMenuItem
-                                  variant="destructive"
-                                  onClick={() => setDeleting(task)}
-                                >
-                                  <Trash2 /> Delete
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {canEditTask(task) && (
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditing(task);
+                                      setFormOpen(true);
+                                    }}
+                                  >
+                                    <Pencil /> Edit
+                                  </DropdownMenuItem>
+                                )}
+                                {canDelete && (
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setDeleting(task)}
+                                  >
+                                    <Trash2 /> Delete
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </TableCell>
                       )}
                     </TableRow>

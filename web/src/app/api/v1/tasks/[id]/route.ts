@@ -45,7 +45,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { user, error } = await requirePermission("task:update");
   if (error) return error;
   const { id } = await params;
-  if (user.clientId) return forbidden();
 
   let body: unknown;
   try {
@@ -63,6 +62,22 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       include: { assignees: true },
     });
     if (!existing) return notFound("Task");
+
+    // portal users may edit only requests THEY submitted, and never the
+    // workflow fields — status/progress stay with the team
+    if (user.clientId) {
+      if (
+        existing.clientId !== user.clientId ||
+        existing.assignedById !== user.id
+      ) {
+        return forbidden();
+      }
+      delete data.status;
+      delete data.progress;
+      delete data.actualHours;
+      delete data.boardOrder;
+      delete data.clientId;
+    }
 
     const currentIds = existing.assignees.map((a) => a.userId).sort();
     const nextIds = assigneeIds ? [...new Set(assigneeIds)].sort() : undefined;

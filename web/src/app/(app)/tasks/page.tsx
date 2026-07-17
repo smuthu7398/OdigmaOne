@@ -12,13 +12,12 @@ export default async function TasksPage() {
   return (
     <TasksView
       canCreate={can(user, "task:create")}
-      // portal users can create requests but not edit/assign/delete —
-      // the API enforces this too; hiding dead controls keeps the UI honest
-      canUpdate={can(user, "task:update") && !isPortal}
+      canUpdate={can(user, "task:update")}
       canDelete={can(user, "task:delete") && !isPortal}
       canAssign={can(user, "task:assign")}
       isPortal={isPortal}
       portalClientId={user.clientId}
+      currentUserId={user.id}
     />
   );
 }

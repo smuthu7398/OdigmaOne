@@ -18,10 +18,11 @@ export default async function TaskDetailPage({
     <TaskDetail
       taskId={id}
       currentUserId={user.id}
-      canUpdate={can(user, "task:update") && !isPortal}
-      canAssign={can(user, "task:assign") && !isPortal}
+      canUpdate={can(user, "task:update")}
+      canAssign={can(user, "task:assign")}
       canComment={can(user, "comment:create")}
       canModerate={can(user, "comment:delete") && !isPortal}
+      isPortal={isPortal}
     />
   );
 }

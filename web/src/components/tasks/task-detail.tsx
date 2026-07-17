@@ -52,6 +52,7 @@ export function TaskDetail({
   canAssign,
   canComment,
   canModerate,
+  isPortal = false,
 }: {
   taskId: string;
   currentUserId: string;
@@ -59,6 +60,7 @@ export function TaskDetail({
   canAssign: boolean;
   canComment: boolean;
   canModerate: boolean;
+  isPortal?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
@@ -140,6 +142,11 @@ export function TaskDetail({
   }
 
   const comments = commentsQuery.data?.data ?? [];
+  // team edits any task; a client edits only requests they submitted
+  const canEditTask =
+    canUpdate && (!isPortal || task.assignedBy.id === currentUserId);
+  // status/progress always stay with the team
+  const canChangeStatus = canUpdate && !isPortal;
 
   return (
     <div className="grid gap-5">
@@ -166,7 +173,7 @@ export function TaskDetail({
           </p>
           <h1 className="text-xl font-semibold tracking-tight">{task.title}</h1>
         </div>
-        {canUpdate && (
+        {canEditTask && (
           <Button
             variant="outline"
             className="rounded-full"
@@ -305,7 +312,7 @@ export function TaskDetail({
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Status
               </p>
-              {canUpdate ? (
+              {canChangeStatus ? (
                 <Select
                   value={task.status}
                   onValueChange={(v) => statusMutation.mutate(v as TaskStatus)}
@@ -415,6 +422,7 @@ export function TaskDetail({
         onOpenChange={setEditOpen}
         task={task}
         canAssign={canAssign}
+        lockedClientId={isPortal ? task.clientId : undefined}
       />
     </div>
   );

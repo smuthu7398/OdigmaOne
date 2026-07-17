@@ -41,14 +41,14 @@ const ROLES: Record<string, { description: string; perms: string[] }> = {
     description: "Full access except role management",
     perms: all.filter((p) => !p.startsWith("role:")),
   },
-  Manager: {
-    description: "Manages clients, projects, tasks and reports",
+  "Account Manager": {
+    description: "Owns client relationships — first stop for client requests",
     perms: [
       "user:read",
-      "client:create", "client:read", "client:update",
+      "client:read", "client:update",
       "project:create", "project:read", "project:update",
       "task:create", "task:read", "task:update", "task:assign",
-      "worklog:create", "worklog:read", "worklog:update",
+      "worklog:create", "worklog:read",
       "comment:create", "comment:read", "comment:update",
       "file:upload", "file:read",
       "report:read", "notification:read", "activity:read", "feedback:read",

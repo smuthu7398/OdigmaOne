@@ -88,26 +88,35 @@ function TaskCard({ task, dragging }: { task: TaskRow; dragging?: boolean }) {
             {formatDate(task.dueDate).replace(/ \d{4}$/, "")}
           </span>
         )}
-        {task.assignees.length > 0 && (
+      </div>
+
+      {/* assignees get their own last row */}
+      {task.assignees.length > 0 && (
+        <div className="flex items-center gap-2 border-t border-border/60 pt-2">
           <span
-            className="flex shrink-0 -space-x-1.5"
+            className="flex -space-x-1.5"
             title={task.assignees.map((a) => a.user.name).join(", ")}
           >
-            {task.assignees.slice(0, 2).map((a) => (
+            {task.assignees.slice(0, 4).map((a) => (
               <Avatar key={a.user.id} className="size-5 ring-1 ring-card">
                 <AvatarFallback className="bg-primary/15 text-[9px] font-semibold text-primary">
                   {initials(a.user.name)}
                 </AvatarFallback>
               </Avatar>
             ))}
-            {task.assignees.length > 2 && (
+            {task.assignees.length > 4 && (
               <span className="z-10 flex size-5 items-center justify-center rounded-full bg-muted text-[9px] font-semibold ring-1 ring-card">
-                +{task.assignees.length - 2}
+                +{task.assignees.length - 4}
               </span>
             )}
           </span>
-        )}
-      </div>
+          <span className="min-w-0 truncate text-[11px] text-muted-foreground">
+            {task.assignees.length === 1
+              ? task.assignees[0].user.name
+              : `${task.assignees[0].user.name.split(" ")[0]} +${task.assignees.length - 1}`}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

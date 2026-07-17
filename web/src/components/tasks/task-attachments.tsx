@@ -36,14 +36,13 @@ function formatSize(bytes: number) {
 
 export function TaskAttachments({
   taskId,
-  currentUserId,
   canUpload,
-  canModerate,
+  canDelete,
 }: {
   taskId: string;
-  currentUserId: string;
   canUpload: boolean;
-  canModerate: boolean;
+  /** admin-only (file:delete) */
+  canDelete: boolean;
 }) {
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -209,7 +208,7 @@ export function TaskAttachments({
                     {relativeTime(file.createdAt)}
                   </p>
                 </div>
-                {(file.uploaderId === currentUserId || canModerate) && (
+                {canDelete && (
                   <Button
                     variant="ghost"
                     size="icon"

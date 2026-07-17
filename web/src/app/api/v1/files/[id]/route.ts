@@ -43,20 +43,14 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
-  const { user, error } = await requirePermission("file:read");
+  // deletion is admin-only (file:delete) — uploaders can NOT remove
+  // their own files; files are part of the audit trail
+  const { user, error } = await requirePermission("file:delete");
   if (error) return error;
   const { id } = await params;
 
   const attachment = await prisma.attachment.findUnique({ where: { id } });
   if (!attachment) return notFound("File");
-
-  // uploader can remove their own; file:delete lets managers remove any
-  if (
-    attachment.uploaderId !== user.id &&
-    !user.permissions.has("file:delete")
-  ) {
-    return forbidden();
-  }
 
   try {
     await prisma.attachment.delete({ where: { id } });

@@ -22,6 +22,7 @@ export default async function TaskDetailPage({
       canAssign={can(user, "task:assign")}
       canComment={can(user, "comment:create")}
       canModerate={can(user, "comment:delete") && !isPortal}
+      canDeleteFiles={can(user, "file:delete") && !isPortal}
       isPortal={isPortal}
     />
   );

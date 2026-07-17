@@ -55,6 +55,7 @@ export function TaskDetail({
   canAssign,
   canComment,
   canModerate,
+  canDeleteFiles = false,
   isPortal = false,
 }: {
   taskId: string;
@@ -63,6 +64,8 @@ export function TaskDetail({
   canAssign: boolean;
   canComment: boolean;
   canModerate: boolean;
+  /** admin-only file deletion (file:delete) */
+  canDeleteFiles?: boolean;
   isPortal?: boolean;
 }) {
   const queryClient = useQueryClient();
@@ -318,9 +321,8 @@ export function TaskDetail({
 
           <TaskAttachments
             taskId={taskId}
-            currentUserId={currentUserId}
             canUpload={canComment /* same audience: team + portal */}
-            canModerate={canModerate}
+            canDelete={canDeleteFiles}
           />
         </div>
 

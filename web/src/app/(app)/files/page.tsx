@@ -9,8 +9,7 @@ export default async function FilesPage() {
   if (!can(user, "file:read")) redirect("/dashboard");
   return (
     <FilesView
-      currentUserId={user.id}
-      canModerate={can(user, "file:delete")}
+      canModerate={can(user, "file:delete") && !user.clientId}
       isPortal={user.clientId !== null}
     />
   );

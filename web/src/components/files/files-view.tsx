@@ -58,11 +58,10 @@ function formatSize(bytes: number) {
 }
 
 export function FilesView({
-  currentUserId,
   canModerate,
   isPortal,
 }: {
-  currentUserId: string;
+  /** admin-only (file:delete) */
   canModerate: boolean;
   isPortal: boolean;
 }) {
@@ -225,7 +224,7 @@ export function FilesView({
                         {formatSize(file.size)}
                       </TableCell>
                       <TableCell>
-                        {(file.uploaderId === currentUserId || canModerate) && (
+                        {canModerate && (
                           <Button
                             variant="ghost"
                             size="icon"

@@ -54,7 +54,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ProjectFormDialog, type ProjectRow } from "./project-form-dialog";
+import Link from "next/link";
+import { type ProjectRow } from "./project-form";
 
 const STATUS_BADGE: Record<string, string> = {
   PLANNED: "bg-status-todo/15 text-status-todo",
@@ -91,8 +92,6 @@ export function ProjectsView({
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [clientFilter, setClientFilter] = useState("ALL");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<ProjectRow | null>(null);
   const [deleting, setDeleting] = useState<ProjectRow | null>(null);
 
   const clientsQuery = useQuery({
@@ -146,13 +145,12 @@ export function ProjectsView({
         </div>
         {canCreate && (
           <Button
+            asChild
             className="ml-auto rounded-full shadow-[0_4px_18px_-4px_var(--primary-glow)]"
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
           >
-            <Plus /> New Project
+            <Link href="/projects/new">
+              <Plus /> New Project
+            </Link>
           </Button>
         )}
       </div>
@@ -236,14 +234,10 @@ export function ProjectsView({
               </p>
             </div>
             {canCreate && !search && status === "ALL" && clientFilter === "ALL" && (
-              <Button
-                className="rounded-full"
-                onClick={() => {
-                  setEditing(null);
-                  setFormOpen(true);
-                }}
-              >
-                <Plus /> Create Project
+              <Button asChild className="rounded-full">
+                <Link href="/projects/new">
+                  <Plus /> Create Project
+                </Link>
               </Button>
             )}
           </div>
@@ -313,13 +307,10 @@ export function ProjectsView({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {canUpdate && (
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setEditing(project);
-                                  setFormOpen(true);
-                                }}
-                              >
-                                <Pencil /> Edit
+                              <DropdownMenuItem asChild>
+                                <Link href={`/projects/${project.id}/edit`}>
+                                  <Pencil /> Edit
+                                </Link>
                               </DropdownMenuItem>
                             )}
                             {canDelete && (
@@ -369,13 +360,6 @@ export function ProjectsView({
           </Button>
         </div>
       )}
-
-      <ProjectFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        project={editing}
-        lockedClientId={portalClientId}
-      />
 
       <AlertDialog
         open={deleting !== null}

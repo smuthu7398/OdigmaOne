@@ -19,6 +19,7 @@ import {
   List,
   ListOrdered,
   Loader2,
+  Paperclip,
   Quote,
   Redo2,
   SquareCode,
@@ -30,7 +31,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/fetcher";
 import { cn } from "@/lib/utils";
 
-async function uploadImage(file: File): Promise<string> {
+async function uploadFile(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
   const result = await api<{ id: string }>("/api/v1/files", {
@@ -85,6 +86,7 @@ export function RichTextEditor({
   /** tailwind min-height class for the writing area */
   minHeight?: string;
 }) {
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -102,22 +104,18 @@ export function RichTextEditor({
         class: `rich-text ${minHeight} max-w-none px-4 py-3 text-sm leading-relaxed outline-none`,
       },
       handlePaste: (_view, event) => {
-        const file = Array.from(event.clipboardData?.files ?? []).find((f) =>
-          f.type.startsWith("image/")
-        );
-        if (file) {
-          insertImage(file);
+        const files = Array.from(event.clipboardData?.files ?? []);
+        if (files.length > 0) {
+          files.forEach(insertFile);
           return true;
         }
         return false;
       },
       handleDrop: (_view, event) => {
-        const file = Array.from(event.dataTransfer?.files ?? []).find((f) =>
-          f.type.startsWith("image/")
-        );
-        if (file) {
+        const files = Array.from(event.dataTransfer?.files ?? []);
+        if (files.length > 0) {
           event.preventDefault();
-          insertImage(file);
+          files.forEach(insertFile); // images embed, zips/docs become links
           return true;
         }
         return false;
@@ -128,12 +126,23 @@ export function RichTextEditor({
     },
   });
 
-  async function insertImage(file: File) {
+  async function insertFile(file: File) {
     if (!editor) return;
     setUploading(true);
     try {
-      const src = await uploadImage(file);
-      editor.chain().focus().setImage({ src, alt: file.name }).run();
+      const src = await uploadFile(file);
+      if (file.type.startsWith("image/")) {
+        editor.chain().focus().setImage({ src, alt: file.name }).run();
+      } else {
+        // non-image files (zip, pdf, …) become a download link
+        editor
+          .chain()
+          .focus()
+          .insertContent(
+            `<a href="${src}" target="_blank" rel="noopener noreferrer">${file.name}</a>&nbsp;`
+          )
+          .run();
+      }
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -240,13 +249,20 @@ export function RichTextEditor({
         <ToolbarButton
           label="Insert screenshot / image"
           disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => imageInputRef.current?.click()}
         >
           {uploading ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <ImagePlus className="size-3.5" />
           )}
+        </ToolbarButton>
+        <ToolbarButton
+          label="Attach any file (zip, pdf, docs…)"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Paperclip className="size-3.5" />
         </ToolbarButton>
 
         <span className="ml-auto flex items-center gap-0.5">
@@ -270,13 +286,23 @@ export function RichTextEditor({
       <EditorContent editor={editor} />
 
       <input
-        ref={fileInputRef}
+        ref={imageInputRef}
         type="file"
         accept="image/*"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) insertImage(file);
+          if (file) insertFile(file);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        multiple
+        onChange={(e) => {
+          Array.from(e.target.files ?? []).forEach(insertFile);
           e.target.value = "";
         }}
       />

@@ -9,6 +9,7 @@ import { taskCode } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskForm, type TaskRow } from "./task-form";
+import { BackButton } from "@/components/back-button";
 
 export function EditTaskView({
   taskId,
@@ -79,16 +80,7 @@ export function EditTaskView({
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
       <div className="flex items-center gap-3">
-        <Button
-          asChild
-          variant="ghost"
-          size="icon"
-          aria-label="Back to task"
-        >
-          <Link href={`/tasks/${task.id}`}>
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <BackButton href={`/tasks/${task.id}`} label="Back to task" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Edit {taskCode(task.number)}

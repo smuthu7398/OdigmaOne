@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectForm } from "./project-form";
+import { BackButton } from "@/components/back-button";
 
 export function NewProjectView({
   lockedClientId,
@@ -17,16 +18,7 @@ export function NewProjectView({
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-5">
       <div className="flex items-center gap-3">
-        <Button
-          asChild
-          variant="ghost"
-          size="icon"
-          aria-label="Back to projects"
-        >
-          <Link href="/projects">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <BackButton href="/projects" label="Back to projects" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             New project

@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { BackButton } from "@/components/back-button";
 
 const createUserFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -92,11 +93,7 @@ export function NewUserView() {
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-5">
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon" aria-label="Back to team">
-          <Link href="/team">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <BackButton href="/team" label="Back to team" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">New user</h1>
           <p className="text-sm text-muted-foreground">

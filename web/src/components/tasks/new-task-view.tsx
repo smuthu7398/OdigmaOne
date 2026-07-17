@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TaskForm } from "./task-form";
+import { BackButton } from "@/components/back-button";
 
 export function NewTaskView({
   canAssign,
@@ -18,11 +19,7 @@ export function NewTaskView({
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon" aria-label="Back to tasks">
-          <Link href="/tasks">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <BackButton href="/tasks" label="Back to tasks" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">New task</h1>
           <p className="text-sm text-muted-foreground">

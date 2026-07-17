@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientForm } from "./client-form";
+import { BackButton } from "@/components/back-button";
 
 export function NewClientView() {
   const router = useRouter();
@@ -13,16 +14,7 @@ export function NewClientView() {
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-5">
       <div className="flex items-center gap-3">
-        <Button
-          asChild
-          variant="ghost"
-          size="icon"
-          aria-label="Back to clients"
-        >
-          <Link href="/clients">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <BackButton href="/clients" label="Back to clients" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">New client</h1>
           <p className="text-sm text-muted-foreground">

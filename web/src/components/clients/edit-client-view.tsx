@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientForm, type ClientRow } from "./client-form";
+import { BackButton } from "@/components/back-button";
 
 export function EditClientView({ clientId }: { clientId: string }) {
   const router = useRouter();
@@ -44,16 +45,7 @@ export function EditClientView({ clientId }: { clientId: string }) {
   return (
     <div className="mx-auto grid w-full max-w-2xl gap-5">
       <div className="flex items-center gap-3">
-        <Button
-          asChild
-          variant="ghost"
-          size="icon"
-          aria-label="Back to clients"
-        >
-          <Link href="/clients">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <BackButton href="/clients" label="Back to clients" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Edit {client.name}

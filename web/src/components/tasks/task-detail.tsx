@@ -34,6 +34,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { type TaskRow } from "./task-form";
 import { TaskAttachments } from "./task-attachments";
+import { BackButton } from "@/components/back-button";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -155,11 +156,7 @@ export function TaskDetail({
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-5">
       <div className="flex flex-wrap items-start gap-3">
-        <Button asChild variant="ghost" size="icon" aria-label="Back to tasks">
-          <Link href="/tasks">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <BackButton href="/tasks" label="Back to tasks" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span

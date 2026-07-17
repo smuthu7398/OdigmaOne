@@ -244,6 +244,7 @@ export function TaskAttachments({
             </p>
           )
         ) : (
+          <>
           <ul className="grid gap-2">
             {files.map((file) => (
               <li
@@ -285,6 +286,20 @@ export function TaskAttachments({
               </li>
             ))}
           </ul>
+          {canUpload && (
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed py-3 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/[0.03] hover:text-foreground"
+            >
+              <UploadCloud className="size-3.5" />
+              <span>
+                <span className="font-medium">Drag &amp; drop</span> files here,
+                or click to browse
+              </span>
+            </button>
+          )}
+          </>
         )}
       </CardContent>
     </Card>

@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -321,39 +322,21 @@ export function TaskFormDialog({
             <Label>
               Assign to * {assigneesLocked && "(needs assign permission)"}
             </Label>
-            <div className="flex flex-wrap gap-1.5">
-              {(usersQuery.data?.data ?? []).map((u) => {
-                const selected = (watch("assigneeIds") ?? []).includes(u.id);
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    disabled={assigneesLocked}
-                    onClick={() => {
-                      const current = watch("assigneeIds") ?? [];
-                      setValue(
-                        "assigneeIds",
-                        selected
-                          ? current.filter((id) => id !== u.id)
-                          : [...current, u.id],
-                        { shouldValidate: true }
-                      );
-                    }}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      selected
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-muted-foreground hover:border-primary/40"
-                    } ${assigneesLocked ? "cursor-not-allowed opacity-60" : ""}`}
-                  >
-                    {selected ? "✓ " : ""}
-                    {u.name}
-                  </button>
-                );
-              })}
-              {usersQuery.isLoading && (
-                <span className="text-xs text-muted-foreground">Loading…</span>
-              )}
-            </div>
+            <MultiSelect
+              options={(usersQuery.data?.data ?? []).map((u) => ({
+                label: u.name,
+                value: u.id,
+              }))}
+              value={watch("assigneeIds") ?? []}
+              onValueChange={(ids) =>
+                setValue("assigneeIds", ids, { shouldValidate: true })
+              }
+              placeholder={
+                usersQuery.isLoading ? "Loading team…" : "Search & select people"
+              }
+              searchPlaceholder="Search team members…"
+              disabled={assigneesLocked}
+            />
             {errors.assigneeIds && (
               <p className="text-sm text-destructive">
                 {errors.assigneeIds.message}

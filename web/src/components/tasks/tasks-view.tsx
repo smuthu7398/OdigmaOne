@@ -312,6 +312,7 @@ export function TasksView({
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Assignee</TableHead>
+                  <TableHead>Assigned by</TableHead>
                   <TableHead>Due</TableHead>
                   {(canUpdate || canDelete) && <TableHead className="w-10" />}
                 </TableRow>
@@ -421,6 +422,19 @@ export function TasksView({
                             —
                           </span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className="inline-flex items-center gap-2 text-sm"
+                          title={task.assignedBy.name}
+                        >
+                          <Avatar className="size-6">
+                            <AvatarFallback className="bg-muted text-[10px] font-semibold text-muted-foreground">
+                              {initials(task.assignedBy.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {task.assignedBy.name.split(" ")[0]}
+                        </span>
                       </TableCell>
                       <TableCell
                         className={`text-sm tabular-nums ${

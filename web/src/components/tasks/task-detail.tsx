@@ -32,6 +32,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { decorateRichText } from "@/lib/richtext";
 import { type TaskRow } from "./task-form";
 import { TaskAttachments } from "./task-attachments";
 import { BackButton } from "@/components/back-button";
@@ -198,7 +199,9 @@ export function TaskDetail({
                     // rich text — sanitized server-side on every write
                     <div
                       className="rich-text text-sm leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: task.description }}
+                      dangerouslySetInnerHTML={{
+                        __html: decorateRichText(task.description),
+                      }}
                     />
                   ) : (
                     // legacy plain-text descriptions
@@ -254,7 +257,9 @@ export function TaskDetail({
                           // rich text — sanitized server-side on write
                           <div
                             className="rich-text text-sm leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: c.body }}
+                            dangerouslySetInnerHTML={{
+                              __html: decorateRichText(c.body),
+                            }}
                           />
                         ) : (
                           <p className="whitespace-pre-wrap text-sm leading-relaxed">

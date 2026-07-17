@@ -9,7 +9,7 @@ type Params = { params: Promise<{ id: string }> };
 
 const INLINE_TYPES = /^(image\/|application\/pdf|text\/plain)/;
 
-export async function GET(_request: NextRequest, { params }: Params) {
+export async function GET(request: NextRequest, { params }: Params) {
   const { user, error } = await requirePermission("file:read");
   if (error) return error;
   const { id } = await params;
@@ -22,9 +22,13 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
   try {
     const buffer = await readStoredFile(attachment.path);
-    const disposition = INLINE_TYPES.test(attachment.mimeType)
-      ? "inline"
-      : "attachment";
+    // ?download=1 forces a save dialog instead of inline preview
+    const forceDownload =
+      request.nextUrl.searchParams.get("download") === "1";
+    const disposition =
+      !forceDownload && INLINE_TYPES.test(attachment.mimeType)
+        ? "inline"
+        : "attachment";
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": attachment.mimeType,

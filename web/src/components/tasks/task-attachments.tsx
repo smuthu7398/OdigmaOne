@@ -73,9 +73,8 @@ export function TaskAttachments({
   return (
     <Card>
       <CardHeader className="flex-row items-center">
-        <CardTitle className="text-sm">
-          Attachments{" "}
-          <span className="text-muted-foreground">({files.length})</span>
+        <CardTitle className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Attachments ({files.length})
         </CardTitle>
         {canUpload && (
           <>

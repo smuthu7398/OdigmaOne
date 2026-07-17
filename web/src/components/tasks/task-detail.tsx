@@ -7,6 +7,9 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Bug,
+  CalendarDays,
+  CheckSquare,
+  Clock,
   Loader2,
   Pencil,
   SendHorizonal,
@@ -22,21 +25,23 @@ import {
   TASK_STATUS_META,
   taskCode,
 } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { type TaskRow } from "./task-form";
 import { TaskAttachments } from "./task-attachments";
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+      {children}
+    </p>
+  );
+}
 
 type CommentRow = {
   id: string;
@@ -148,7 +153,7 @@ export function TaskDetail({
   const canChangeStatus = canUpdate && !isPortal;
 
   return (
-    <div className="grid gap-5">
+    <div className="mx-auto grid w-full max-w-5xl gap-5">
       <div className="flex flex-wrap items-start gap-3">
         <Button asChild variant="ghost" size="icon" aria-label="Back to tasks">
           <Link href="/tasks">
@@ -156,21 +161,30 @@ export function TaskDetail({
           </Link>
         </Button>
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
-            {task.type === "BUG" && (
-              <Bug className="size-3.5 text-status-blocked" />
-            )}
-            {taskCode(task.number)}
-            <span>·</span>
-            {task.client.name}
-            {task.project && (
-              <>
-                <span>·</span>
-                {task.project.name}
-              </>
-            )}
-          </p>
-          <h1 className="text-xl font-semibold tracking-tight">{task.title}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold",
+                task.type === "BUG"
+                  ? "bg-status-blocked/15 text-status-blocked"
+                  : "bg-primary/10 text-primary"
+              )}
+            >
+              {task.type === "BUG" ? (
+                <Bug className="size-3" />
+              ) : (
+                <CheckSquare className="size-3" />
+              )}
+              {task.type === "BUG" ? "Bug" : "Task"}
+            </span>
+            <p className="font-mono text-xs text-muted-foreground">
+              {taskCode(task.number)} · {task.client.name}
+              {task.project && ` · ${task.project.name}`}
+            </p>
+          </div>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+            {task.title}
+          </h1>
         </div>
         {canEditTask && (
           <Button asChild variant="outline" className="rounded-full">
@@ -181,17 +195,17 @@ export function TaskDetail({
         )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_290px]">
+      <div className="grid items-start gap-4 lg:grid-cols-[1fr_330px]">
         <div className="grid content-start gap-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Description</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="grid gap-2">
+              <SectionLabel>Description</SectionLabel>
               {task.description ? (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {task.description}
-                </p>
+                <div className="rounded-xl bg-muted/40 p-4">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {task.description}
+                  </p>
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
                   No description yet.
@@ -208,15 +222,8 @@ export function TaskDetail({
           />
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">
-                Comments{" "}
-                <span className="text-muted-foreground">
-                  ({comments.length})
-                </span>
-              </CardTitle>
-            </CardHeader>
             <CardContent className="grid gap-4">
+              <SectionLabel>Comments ({comments.length})</SectionLabel>
               {commentsQuery.isLoading ? (
                 <Skeleton className="h-16" />
               ) : comments.length === 0 ? (
@@ -275,7 +282,7 @@ export function TaskDetail({
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Write a comment…"
                     rows={2}
-                    className="flex-1"
+                    className="flex-1 border-0 bg-muted/40 p-3 shadow-none focus-visible:ring-1"
                     onKeyDown={(e) => {
                       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                         e.preventDefault();
@@ -303,31 +310,35 @@ export function TaskDetail({
           </Card>
         </div>
 
-        <Card className="h-fit">
-          <CardContent className="grid gap-4 text-sm">
-            <div className="grid gap-1.5">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Status
-              </p>
+        <Card className="lg:sticky lg:top-20">
+          <CardContent className="grid gap-5 text-sm">
+            <div className="grid gap-2">
+              <SectionLabel>Status</SectionLabel>
               {canChangeStatus ? (
-                <Select
-                  value={task.status}
-                  onValueChange={(v) => statusMutation.mutate(v as TaskStatus)}
-                >
-                  <SelectTrigger
-                    size="sm"
-                    className={`w-fit gap-1.5 rounded-full border-0 px-3 text-xs font-semibold ${TASK_STATUS_META[task.status].badge}`}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(TASK_STATUS_META).map(([value, meta]) => (
-                      <SelectItem key={value} value={value}>
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(TASK_STATUS_META).map(([value, meta]) => {
+                    const active = task.status === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        disabled={statusMutation.isPending}
+                        onClick={() =>
+                          !active && statusMutation.mutate(value as TaskStatus)
+                        }
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
+                          meta.badge,
+                          active
+                            ? "ring-2 ring-current"
+                            : "opacity-45 hover:opacity-100"
+                        )}
+                      >
                         {meta.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </button>
+                    );
+                  })}
+                </div>
               ) : (
                 <Badge
                   className={`w-fit rounded-full border-0 ${TASK_STATUS_META[task.status].badge}`}
@@ -337,34 +348,30 @@ export function TaskDetail({
               )}
             </div>
 
-            <div className="grid gap-1.5">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Priority
-              </p>
+            <div className="grid gap-2">
+              <SectionLabel>Priority</SectionLabel>
               <Badge
-                className={`w-fit rounded-full border-0 ${TASK_PRIORITY_META[task.priority].badge}`}
+                className={`w-fit rounded-full border-0 px-3 py-1 ${TASK_PRIORITY_META[task.priority].badge}`}
               >
                 {TASK_PRIORITY_META[task.priority].label}
               </Badge>
             </div>
 
-            <div className="grid gap-1.5">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Assignees ({task.assignees.length})
-              </p>
+            <div className="grid gap-2">
+              <SectionLabel>Assignees ({task.assignees.length})</SectionLabel>
               {task.assignees.length > 0 ? (
-                <div className="grid gap-1.5">
+                <div className="grid gap-2">
                   {task.assignees.map((a) => (
                     <span
                       key={a.user.id}
-                      className="inline-flex items-center gap-2"
+                      className="inline-flex items-center gap-2.5"
                     >
-                      <Avatar className="size-6">
+                      <Avatar className="size-7">
                         <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
                           {initials(a.user.name)}
                         </AvatarFallback>
                       </Avatar>
-                      {a.user.name}
+                      <span className="font-medium">{a.user.name}</span>
                     </span>
                   ))}
                 </div>
@@ -373,43 +380,55 @@ export function TaskDetail({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-1.5">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="grid gap-2">
+              <SectionLabel>Progress</SectionLabel>
+              <div className="flex items-center gap-3">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${task.progress}%` }}
+                  />
+                </div>
+                <span className="text-xs font-semibold tabular-nums">
+                  {task.progress}%
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 rounded-xl bg-muted/40 p-3">
+              <div className="grid gap-1">
+                <SectionLabel>
+                  <CalendarDays className="mr-1 inline size-3" />
                   Due date
+                </SectionLabel>
+                <p className="font-medium tabular-nums">
+                  {formatDate(task.dueDate)}
                 </p>
-                <p className="tabular-nums">{formatDate(task.dueDate)}</p>
               </div>
-              <div className="grid gap-1.5">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Progress
-                </p>
-                <p className="tabular-nums">{task.progress}%</p>
-              </div>
-              <div className="grid gap-1.5">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Estimated
-                </p>
-                <p className="tabular-nums">
+              <div className="grid gap-1">
+                <SectionLabel>
+                  <Clock className="mr-1 inline size-3" />
+                  Estimate
+                </SectionLabel>
+                <p className="font-medium tabular-nums">
                   {task.estimatedHours ? `${Number(task.estimatedHours)}h` : "—"}
                 </p>
               </div>
-              <div className="grid gap-1.5">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Actual
-                </p>
-                <p className="tabular-nums">
+              <div className="col-span-2 grid gap-1">
+                <SectionLabel>Actual hours</SectionLabel>
+                <p className="font-medium tabular-nums">
                   {task.actualHours ? `${Number(task.actualHours)}h` : "—"}
                 </p>
               </div>
             </div>
 
-            <div className="grid gap-1.5 border-t pt-4">
-              <p className="text-xs text-muted-foreground">
-                Created by {task.assignedBy.name} ·{" "}
-                {formatDate(task.createdAt)}
-              </p>
-            </div>
+            <p className="border-t pt-4 text-xs text-muted-foreground">
+              Created by{" "}
+              <span className="font-medium text-foreground">
+                {task.assignedBy.name}
+              </span>{" "}
+              · {formatDate(task.createdAt)}
+            </p>
           </CardContent>
         </Card>
       </div>

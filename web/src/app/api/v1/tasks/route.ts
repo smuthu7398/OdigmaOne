@@ -136,10 +136,9 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return validationError(parsed.error);
   const data = parsed.data;
 
-  // portal users file requests for their own client only, unassigned, as To Do
+  // portal users file requests for their own client only, always as To Do
   if (user.clientId) {
     data.clientId = user.clientId;
-    data.assignedToId = undefined;
     data.status = "TODO";
   }
   if (data.assignedToId && !user.permissions.has("task:assign")) {
@@ -151,6 +150,11 @@ export async function POST(request: NextRequest) {
       where: { id: data.clientId, deletedAt: null },
     });
     if (!client) return notFound("Client");
+
+    // client requests default to the client's account manager
+    if (user.clientId && !data.assignedToId && client.accountManagerId) {
+      data.assignedToId = client.accountManagerId;
+    }
 
     if (data.projectId) {
       const project = await prisma.project.findFirst({
@@ -174,10 +178,27 @@ export async function POST(request: NextRequest) {
       userIds: [task.assignedToId],
       actorId: user.id,
       type: "task_assigned",
-      title: `${user.name} assigned you ODG-${task.number}`,
+      title: user.clientId
+        ? `New request from ${client.name}: ODG-${task.number}`
+        : `${user.name} assigned you ODG-${task.number}`,
       body: task.title,
       link: `/tasks/${task.id}`,
     });
+    // the account manager always hears about new client requests
+    if (
+      user.clientId &&
+      client.accountManagerId &&
+      client.accountManagerId !== task.assignedToId
+    ) {
+      await notify({
+        userIds: [client.accountManagerId],
+        actorId: user.id,
+        type: "task_assigned",
+        title: `New request from ${client.name}: ODG-${task.number}`,
+        body: task.title,
+        link: `/tasks/${task.id}`,
+      });
+    }
     return created(task);
   } catch (err) {
     return internalError(err);

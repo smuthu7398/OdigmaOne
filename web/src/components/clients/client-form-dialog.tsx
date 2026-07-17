@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -41,8 +41,12 @@ export type ClientRow = {
   status: ClientStatus;
   notes: string | null;
   createdAt: string;
+  accountManagerId: string | null;
+  accountManager?: { id: string; name: string } | null;
   _count?: { projects: number; tasks: number };
 };
+
+const NONE = "__none__";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = [
   { value: "ACTIVE", label: "Active" },
@@ -61,6 +65,12 @@ export function ClientFormDialog({
 }) {
   const queryClient = useQueryClient();
   const isEdit = client !== null;
+
+  const usersQuery = useQuery({
+    queryKey: ["users", "options"],
+    queryFn: () => api<{ id: string; name: string }[]>("/api/v1/users"),
+    enabled: open,
+  });
 
   const {
     register,
@@ -83,6 +93,7 @@ export function ClientFormDialog({
         phone: client?.phone ?? undefined,
         status: client?.status ?? "ACTIVE",
         notes: client?.notes ?? undefined,
+        accountManagerId: client?.accountManagerId ?? undefined,
       });
     }
   }, [open, client, reset]);
@@ -184,6 +195,32 @@ export function ClientFormDialog({
               <Label htmlFor="phone">Phone</Label>
               <Input id="phone" {...register("phone")} />
             </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Account Manager</Label>
+            <Select
+              value={watch("accountManagerId") ?? NONE}
+              onValueChange={(v) =>
+                setValue("accountManagerId", v === NONE ? null : v)
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Who owns this client?" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>No account manager</SelectItem>
+                {(usersQuery.data?.data ?? []).map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Client requests without an assignee land with this person, who
+              is also notified of every new request.
+            </p>
           </div>
 
           <div className="grid gap-2">

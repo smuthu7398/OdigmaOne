@@ -51,7 +51,10 @@ export async function GET(request: NextRequest) {
         orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        include: { _count: { select: { projects: true, tasks: true } } },
+        include: {
+          _count: { select: { projects: true, tasks: true } },
+          accountManager: { select: { id: true, name: true } },
+        },
       }),
       prisma.client.count({ where }),
     ]);

@@ -292,30 +292,32 @@ export function TaskFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label>Status</Label>
-              <Select
-                value={watch("status")}
-                onValueChange={(v) => setValue("status", v as TaskStatus)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(TASK_STATUS_META).map(([value, meta]) => (
-                    <SelectItem key={value} value={value}>
-                      {meta.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {!lockedClientId && (
+              <div className="grid gap-2">
+                <Label>Status</Label>
+                <Select
+                  value={watch("status")}
+                  onValueChange={(v) => setValue("status", v as TaskStatus)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TASK_STATUS_META).map(([value, meta]) => (
+                      <SelectItem key={value} value={value}>
+                        {meta.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             {canAssign && (
               <div className="grid gap-2">
-                <Label>Assignee</Label>
+                <Label>{lockedClientId ? "Assign to (optional)" : "Assignee"}</Label>
                 <Select
                   value={watch("assignedToId") ?? NONE}
                   onValueChange={(v) =>
@@ -326,7 +328,9 @@ export function TaskFormDialog({
                     <SelectValue placeholder="Unassigned" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NONE}>Unassigned</SelectItem>
+                    <SelectItem value={NONE}>
+                      {lockedClientId ? "Your account manager" : "Unassigned"}
+                    </SelectItem>
                     {(usersQuery.data?.data ?? []).map((u) => (
                       <SelectItem key={u.id} value={u.id}>
                         {u.name}

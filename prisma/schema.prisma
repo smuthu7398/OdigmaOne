@@ -39,8 +39,9 @@ model User {
   attachments   Attachment[]
   workLogs      WorkLog[]
   activities    Activity[]
-  notifications Notification[]
-  pushTokens    PushToken[]
+  notifications  Notification[]
+  pushTokens     PushToken[]
+  managedClients Client[]       @relation("ManagedClients")
 
   @@index([roleId])
   @@index([clientId])
@@ -140,13 +141,16 @@ enum ClientStatus {
 }
 
 model Client {
-  id          String       @id @default(cuid())
-  name        String
-  companyName String?
-  email       String?
-  phone       String?
-  status      ClientStatus @default(ACTIVE)
-  notes       String?      @db.Text
+  id               String       @id @default(cuid())
+  name             String
+  companyName      String?
+  email            String?
+  phone            String?
+  status           ClientStatus @default(ACTIVE)
+  notes            String?      @db.Text
+  // company-side person responsible for this client
+  accountManagerId String?
+  accountManager   User?        @relation("ManagedClients", fields: [accountManagerId], references: [id])
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime? // soft delete

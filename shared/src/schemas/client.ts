@@ -8,6 +8,7 @@ export const createClientSchema = z.object({
   phone: z.string().max(20).optional(),
   status: clientStatusSchema.default("ACTIVE"),
   notes: z.string().max(5000).optional(),
+  accountManagerId: z.string().nullable().optional(),
 });
 
 export const updateClientSchema = createClientSchema.partial();

@@ -22,25 +22,27 @@ const createUserSchema = z.object({
 });
 
 /** Team list. Minimal shape for pickers; ?full=1 (needs user:read) for the
- *  management page. Portal users never see it. */
+ *  management page. Portal users get names only — enough to direct a
+ *  request at someone, nothing more. */
 export async function GET(request: NextRequest) {
   const { user, error } = await requirePermission();
   if (error) return error;
-  if (user.clientId) return forbidden();
 
   const full = request.nextUrl.searchParams.get("full") === "1";
-  if (full && !can(user, "user:read")) return forbidden();
+  if (full && (user.clientId || !can(user, "user:read"))) return forbidden();
 
   try {
     if (!full) {
       const users = await prisma.user.findMany({
         where: { isActive: true, clientId: null },
-        select: {
-          id: true,
-          name: true,
-          image: true,
-          role: { select: { name: true } },
-        },
+        select: user.clientId
+          ? { id: true, name: true } // portal: names only
+          : {
+              id: true,
+              name: true,
+              image: true,
+              role: { select: { name: true } },
+            },
         orderBy: { name: "asc" },
       });
       return ok(users);

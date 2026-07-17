@@ -16,7 +16,7 @@ export default async function TasksPage() {
       // the API enforces this too; hiding dead controls keeps the UI honest
       canUpdate={can(user, "task:update") && !isPortal}
       canDelete={can(user, "task:delete") && !isPortal}
-      canAssign={can(user, "task:assign") && !isPortal}
+      canAssign={can(user, "task:assign")}
       isPortal={isPortal}
       portalClientId={user.clientId}
     />

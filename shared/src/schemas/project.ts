@@ -10,7 +10,15 @@ export const createProjectSchema = z.object({
   endDate: z.coerce.date().optional(),
 });
 
-export const updateProjectSchema = createProjectSchema.partial();
+// declared without defaults — see task.ts note on zod v4 partials
+export const updateProjectSchema = z.object({
+  clientId: z.string().min(1).optional(),
+  name: z.string().min(1, "Project name is required").max(191).optional(),
+  description: z.string().max(10000).nullable().optional(),
+  status: projectStatusSchema.optional(),
+  startDate: z.coerce.date().nullable().optional(),
+  endDate: z.coerce.date().nullable().optional(),
+});
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;

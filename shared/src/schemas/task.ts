@@ -22,7 +22,21 @@ export const createTaskSchema = z.object({
   dueDate: z.coerce.date().optional(),
 });
 
-export const updateTaskSchema = createTaskSchema.partial().extend({
+// NOTE: not createTaskSchema.partial() — zod v4 still applies .default()
+// values inside partials, which would silently reset type/priority/status
+// on every PATCH. Update fields are declared without defaults.
+export const updateTaskSchema = z.object({
+  type: taskTypeSchema.optional(),
+  clientId: z.string().min(1).optional(),
+  projectId: z.string().nullable().optional(),
+  title: z.string().min(1, "Title is required").max(191).optional(),
+  description: z.string().max(20000).nullable().optional(),
+  category: z.string().max(100).nullable().optional(),
+  priority: taskPrioritySchema.optional(),
+  status: taskStatusSchema.optional(),
+  assigneeIds: z.array(z.string()).min(1).max(10).optional(),
+  estimatedHours: z.coerce.number().min(0).max(9999).optional(),
+  dueDate: z.coerce.date().nullable().optional(),
   actualHours: z.coerce.number().min(0).max(9999).optional(),
   progress: z.coerce.number().int().min(0).max(100).optional(),
   boardOrder: z.coerce.number().int().optional(),

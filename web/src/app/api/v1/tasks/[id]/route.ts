@@ -63,20 +63,35 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     });
     if (!existing) return notFound("Task");
 
-    // portal users may edit only requests THEY submitted, and never the
+    // portal users may touch only their own client's tasks, and never the
     // workflow fields — status/progress stay with the team
     if (user.clientId) {
-      if (
-        existing.clientId !== user.clientId ||
-        existing.assignedById !== user.id
-      ) {
-        return forbidden();
-      }
+      if (existing.clientId !== user.clientId) return forbidden();
       delete data.status;
       delete data.progress;
       delete data.actualHours;
       delete data.boardOrder;
       delete data.clientId;
+    }
+
+    // content edits (title, description, dates, …) belong to the creator
+    // alone; status/progress (workflow) and assignees (task:assign) are
+    // governed separately
+    const WORKFLOW_FIELDS = new Set([
+      "status",
+      "progress",
+      "actualHours",
+      "boardOrder",
+    ]);
+    const contentFields = Object.keys(data).filter(
+      (f) => !WORKFLOW_FIELDS.has(f) && data[f as keyof typeof data] !== undefined
+    );
+    if (contentFields.length > 0 && existing.assignedById !== user.id) {
+      return fail(
+        403,
+        "FORBIDDEN",
+        "Only the person who created this task can edit it"
+      );
     }
 
     const currentIds = existing.assignees.map((a) => a.userId).sort();

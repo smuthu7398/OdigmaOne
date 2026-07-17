@@ -142,9 +142,8 @@ export function TaskDetail({
   }
 
   const comments = commentsQuery.data?.data ?? [];
-  // team edits any task; a client edits only requests they submitted
-  const canEditTask =
-    canUpdate && (!isPortal || task.assignedBy.id === currentUserId);
+  // content edits belong to the creator alone
+  const canEditTask = canUpdate && task.assignedBy.id === currentUserId;
   // status/progress always stay with the team
   const canChangeStatus = canUpdate && !isPortal;
 

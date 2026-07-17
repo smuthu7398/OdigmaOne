@@ -85,10 +85,10 @@ export function TasksView({
   portalClientId?: string | null;
   currentUserId: string;
 }) {
-  // status stays with the team; clients edit only their own submissions
+  // status stays with the team; content edits belong to the creator alone
   const canChangeStatus = canUpdate && !isPortal;
   const canEditTask = (task: TaskRow) =>
-    canUpdate && (!isPortal || task.assignedBy.id === currentUserId);
+    canUpdate && task.assignedBy.id === currentUserId;
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");

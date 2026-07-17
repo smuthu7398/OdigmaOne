@@ -171,3 +171,20 @@
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* slim, quiet scrollbars for board lanes and similar strips */
+.scrollbar-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.scrollbar-slim::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-slim::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+.scrollbar-slim::-webkit-scrollbar-track {
+  background: transparent;
+}

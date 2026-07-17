@@ -145,7 +145,9 @@ function Column({
   return (
     <div
       className={cn(
-        "flex h-full w-72 shrink-0 flex-col rounded-2xl bg-muted/50 transition-shadow",
+        // fixed width below xl (board scrolls); fluid at xl+ so all five
+        // columns share the viewport with no horizontal scrollbar
+        "flex h-full w-64 shrink-0 flex-col rounded-2xl bg-muted/50 transition-shadow xl:w-auto xl:min-w-0 xl:flex-1 xl:shrink",
         isOver && "ring-2 ring-primary/40"
       )}
     >
@@ -161,7 +163,7 @@ function Column({
 
       <div
         ref={setNodeRef}
-        className="grid min-h-0 flex-1 content-start gap-2 overflow-y-auto px-2 pb-2"
+        className="scrollbar-slim grid min-h-0 flex-1 content-start gap-2 overflow-y-auto px-2 pb-2"
       >
         {data.loading ? (
           <>
@@ -353,9 +355,10 @@ export function BoardView({
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-        {/* the board scrolls horizontally by itself; columns scroll vertically */}
-        <div className="min-h-0 flex-1 overflow-x-auto">
-          <div className="flex h-full gap-3 pb-1">
+        {/* below xl the board scrolls horizontally (slim bar); at xl+ all
+            five columns fit and no horizontal scrollbar exists */}
+        <div className="scrollbar-slim min-h-0 flex-1 overflow-x-auto xl:overflow-x-visible">
+          <div className="flex h-full min-w-max gap-3 pb-1 xl:min-w-0">
             {COLUMNS.map((status) => (
               <Column
                 key={status}

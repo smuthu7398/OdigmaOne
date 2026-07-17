@@ -217,7 +217,18 @@ export default function TaskDetailScreen() {
                     {relativeTime(c.createdAt)}
                   </Text>
                 </Text>
-                <Text style={styles.commentBody}>{c.body}</Text>
+                <Text style={styles.commentBody}>
+                  {c.body
+                    .replace(/<br\s*\/?>/gi, "\n")
+                    .replace(/<\/(p|li|h[1-3]|blockquote|pre)>/gi, "\n")
+                    .replace(/<li[^>]*>/gi, "• ")
+                    .replace(/<[^>]+>/g, "")
+                    .replace(/&amp;/g, "&")
+                    .replace(/&lt;/g, "<")
+                    .replace(/&gt;/g, ">")
+                    .replace(/\n{3,}/g, "\n\n")
+                    .trim()}
+                </Text>
               </View>
             </View>
           ))}

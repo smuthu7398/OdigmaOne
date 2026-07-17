@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
+import { sanitizeRichText } from "@/lib/sanitize";
 import {
   forbidden,
   internalError,
@@ -12,7 +13,7 @@ import {
 import { z } from "zod";
 
 const updateCommentSchema = z.object({
-  body: z.string().min(1, "Comment can't be empty").max(10000),
+  body: z.string().min(1, "Comment can't be empty").max(50000),
 });
 
 type Params = { params: Promise<{ id: string }> };
@@ -44,7 +45,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     const comment = await prisma.comment.update({
       where: { id },
-      data: { body: parsed.data.body },
+      data: { body: sanitizeRichText(parsed.data.body) },
       include: { author: { select: { id: true, name: true, image: true } } },
     });
     return ok(comment);

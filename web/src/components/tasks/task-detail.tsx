@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { type TaskRow } from "./task-form";
 import { TaskAttachments } from "./task-attachments";
 import { BackButton } from "@/components/back-button";
@@ -62,8 +62,9 @@ export function TaskDetail({
   isPortal?: boolean;
 }) {
   const queryClient = useQueryClient();
-  const [editOpen, setEditOpen] = useState(false);
   const [comment, setComment] = useState("");
+  // remounts the composer (clears it) after a successful post
+  const [composerKey, setComposerKey] = useState(0);
 
   const taskQuery = useQuery({
     queryKey: ["task", taskId],
@@ -97,6 +98,7 @@ export function TaskDetail({
       }),
     onSuccess: () => {
       setComment("");
+      setComposerKey((k) => k + 1);
       queryClient.invalidateQueries({ queryKey: ["comments", taskId] });
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
     },
@@ -248,9 +250,17 @@ export function TaskDetail({
                             {relativeTime(c.createdAt)}
                           </span>
                         </p>
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {c.body}
-                        </p>
+                        {c.body.trimStart().startsWith("<") ? (
+                          // rich text — sanitized server-side on write
+                          <div
+                            className="rich-text text-sm leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: c.body }}
+                          />
+                        ) : (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                            {c.body}
+                          </p>
+                        )}
                       </div>
                       {(c.author.id === currentUserId || canModerate) && (
                         <Button
@@ -269,41 +279,27 @@ export function TaskDetail({
               )}
 
               {canComment && (
-                <form
-                  className="flex gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (comment.trim()) commentMutation.mutate(comment.trim());
-                  }}
-                >
-                  <Textarea
+                <div className="grid gap-2">
+                  <RichTextEditor
+                    key={composerKey}
                     value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Write a comment…"
-                    rows={2}
-                    className="flex-1 border-0 bg-muted/40 p-3 shadow-none focus-visible:ring-1"
-                    onKeyDown={(e) => {
-                      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-                        e.preventDefault();
-                        if (comment.trim())
-                          commentMutation.mutate(comment.trim());
-                      }
-                    }}
+                    onChange={setComment}
+                    placeholder="Write a comment… paste screenshots right here"
+                    minHeight="min-h-20"
                   />
                   <Button
-                    type="submit"
-                    size="icon"
-                    className="self-end rounded-full"
+                    className="justify-self-end rounded-full px-5"
                     disabled={commentMutation.isPending || !comment.trim()}
-                    aria-label="Post comment"
+                    onClick={() => commentMutation.mutate(comment)}
                   >
                     {commentMutation.isPending ? (
                       <Loader2 className="animate-spin" />
                     ) : (
                       <SendHorizonal className="size-4" />
                     )}
+                    Post comment
                   </Button>
-                </form>
+                </div>
               )}
             </CardContent>
           </Card>

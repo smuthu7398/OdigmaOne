@@ -77,10 +77,13 @@ export function RichTextEditor({
   value,
   onChange,
   placeholder = "Write something…",
+  minHeight = "min-h-44",
 }: {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  /** tailwind min-height class for the writing area */
+  minHeight?: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -96,8 +99,7 @@ export function RichTextEditor({
     content: value || "",
     editorProps: {
       attributes: {
-        class:
-          "rich-text min-h-44 max-w-none px-4 py-3 text-sm leading-relaxed outline-none",
+        class: `rich-text ${minHeight} max-w-none px-4 py-3 text-sm leading-relaxed outline-none`,
       },
       handlePaste: (_view, event) => {
         const file = Array.from(event.clipboardData?.files ?? []).find((f) =>

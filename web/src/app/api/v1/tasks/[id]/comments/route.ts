@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notify";
+import { sanitizeRichText } from "@/lib/sanitize";
 import {
   created,
   forbidden,
@@ -14,7 +15,7 @@ import {
 import { z } from "zod";
 
 const createCommentSchema = z.object({
-  body: z.string().min(1, "Comment can't be empty").max(10000),
+  body: z.string().min(1, "Comment can't be empty").max(50000),
 });
 
 type Params = { params: Promise<{ id: string }> };
@@ -66,7 +67,11 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   try {
     const comment = await prisma.comment.create({
-      data: { taskId: id, authorId: user.id, body: parsed.data.body },
+      data: {
+        taskId: id,
+        authorId: user.id,
+        body: sanitizeRichText(parsed.data.body),
+      },
       include: { author: { select: { id: true, name: true, image: true } } },
     });
     await logActivity({
@@ -81,7 +86,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       actorId: user.id,
       type: "comment_added",
       title: `${user.name} commented on ODG-${task.number}`,
-      body: parsed.data.body.slice(0, 120),
+      body: parsed.data.body.replace(/<[^>]+>/g, " ").trim().slice(0, 120),
       link: `/tasks/${task.id}`,
     });
     return created(comment);

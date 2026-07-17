@@ -49,7 +49,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ClientFormDialog, type ClientRow } from "./client-form-dialog";
+import Link from "next/link";
+import { type ClientRow } from "./client-form";
 
 const STATUS_BADGE: Record<string, string> = {
   ACTIVE: "bg-status-done/15 text-status-done",
@@ -71,8 +72,6 @@ export function ClientsView({
   const [q, setQ] = useState("");
   const [search, setSearch] = useState(""); // debounced-ish: applied on Enter/blur
   const [status, setStatus] = useState<string>("ALL");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<ClientRow | null>(null);
   const [deleting, setDeleting] = useState<ClientRow | null>(null);
 
   const query = useQuery({
@@ -116,13 +115,12 @@ export function ClientsView({
         </div>
         {canCreate && (
           <Button
+            asChild
             className="ml-auto rounded-full shadow-[0_4px_18px_-4px_var(--primary-glow)]"
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
           >
-            <Plus /> New Client
+            <Link href="/clients/new">
+              <Plus /> New Client
+            </Link>
           </Button>
         )}
       </div>
@@ -183,14 +181,10 @@ export function ClientsView({
               </p>
             </div>
             {canCreate && !search && status === "ALL" && (
-              <Button
-                className="rounded-full"
-                onClick={() => {
-                  setEditing(null);
-                  setFormOpen(true);
-                }}
-              >
-                <Plus /> Create Client
+              <Button asChild className="rounded-full">
+                <Link href="/clients/new">
+                  <Plus /> Create Client
+                </Link>
               </Button>
             )}
           </div>
@@ -254,13 +248,10 @@ export function ClientsView({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {canUpdate && (
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setEditing(client);
-                                  setFormOpen(true);
-                                }}
-                              >
-                                <Pencil /> Edit
+                              <DropdownMenuItem asChild>
+                                <Link href={`/clients/${client.id}/edit`}>
+                                  <Pencil /> Edit
+                                </Link>
                               </DropdownMenuItem>
                             )}
                             {canDelete && (
@@ -310,12 +301,6 @@ export function ClientsView({
           </Button>
         </div>
       )}
-
-      <ClientFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        client={editing}
-      />
 
       <AlertDialog
         open={deleting !== null}

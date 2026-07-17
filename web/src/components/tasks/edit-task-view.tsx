@@ -7,7 +7,6 @@ import { ArrowLeft, Lock } from "lucide-react";
 import { api } from "@/lib/fetcher";
 import { taskCode } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskForm, type TaskRow } from "./task-form";
 
@@ -31,9 +30,12 @@ export function EditTaskView({
 
   if (taskQuery.isLoading) {
     return (
-      <div className="mx-auto grid w-full max-w-2xl gap-5">
+      <div className="mx-auto grid w-full max-w-5xl gap-5">
         <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-130 rounded-xl" />
+        <div className="grid gap-4 lg:grid-cols-[1fr_330px]">
+          <Skeleton className="h-100 rounded-xl" />
+          <Skeleton className="h-100 rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -75,7 +77,7 @@ export function EditTaskView({
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-2xl gap-5">
+    <div className="mx-auto grid w-full max-w-5xl gap-5">
       <div className="flex items-center gap-3">
         <Button
           asChild
@@ -98,17 +100,13 @@ export function EditTaskView({
         </div>
       </div>
 
-      <Card>
-        <CardContent>
-          <TaskForm
-            task={task}
-            canAssign={canAssign}
-            lockedClientId={isPortal ? task.clientId : undefined}
-            onDone={() => router.push(`/tasks/${task.id}`)}
-            onCancel={() => router.push(`/tasks/${task.id}`)}
-          />
-        </CardContent>
-      </Card>
+      <TaskForm
+        task={task}
+        canAssign={canAssign}
+        lockedClientId={isPortal ? task.clientId : undefined}
+        onDone={() => router.push(`/tasks/${task.id}`)}
+        onCancel={() => router.push(`/tasks/${task.id}`)}
+      />
     </div>
   );
 }

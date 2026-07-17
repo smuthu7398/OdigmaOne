@@ -12,6 +12,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { api } from "@/lib/fetcher";
+import { uploadWithProgress } from "@/lib/upload";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,26 +50,45 @@ export function TaskAttachments({
   const [dragging, setDragging] = useState(false);
   // dragenter/leave fire for children too — count to avoid flicker
   const dragDepth = useRef(0);
+  // in-flight uploads with live progress
+  const [uploads, setUploads] = useState<
+    { key: string; name: string; size: number; progress: number; error?: string }[]
+  >([]);
 
   const query = useQuery({
     queryKey: ["files", taskId],
     queryFn: () => api<AttachmentRow[]>(`/api/v1/files?taskId=${taskId}`),
   });
 
-  const uploadMutation = useMutation({
-    mutationFn: (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("taskId", taskId);
-      return api("/api/v1/files", { method: "POST", body: formData });
-    },
-    onSuccess: (_, file) => {
-      toast.success("File uploaded.", { description: file.name });
-      queryClient.invalidateQueries({ queryKey: ["files", taskId] });
-    },
-    onError: (err: Error, file) =>
-      toast.error(`${file.name}: ${err.message}`),
-  });
+  function startUpload(file: File) {
+    const key = `${file.name}-${Date.now()}-${Math.random()}`;
+    setUploads((u) => [
+      ...u,
+      { key, name: file.name, size: file.size, progress: 0 },
+    ]);
+    uploadWithProgress(file, { taskId }, (percent) =>
+      setUploads((u) =>
+        u.map((item) => (item.key === key ? { ...item, progress: percent } : item))
+      )
+    )
+      .then(() => {
+        setUploads((u) => u.filter((item) => item.key !== key));
+        toast.success("File uploaded.", { description: file.name });
+        queryClient.invalidateQueries({ queryKey: ["files", taskId] });
+      })
+      .catch((err: Error) => {
+        setUploads((u) =>
+          u.map((item) =>
+            item.key === key ? { ...item, error: err.message } : item
+          )
+        );
+        toast.error(`${file.name}: ${err.message}`);
+        setTimeout(
+          () => setUploads((u) => u.filter((item) => item.key !== key)),
+          5000
+        );
+      });
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/api/v1/files/${id}`, { method: "DELETE" }),
@@ -80,7 +100,7 @@ export function TaskAttachments({
   });
 
   function uploadAll(files: FileList | File[]) {
-    Array.from(files).forEach((file) => uploadMutation.mutate(file));
+    Array.from(files).forEach(startUpload);
   }
 
   const files = query.data?.data ?? [];
@@ -143,10 +163,9 @@ export function TaskAttachments({
               variant="outline"
               size="sm"
               className="ml-auto rounded-full"
-              disabled={uploadMutation.isPending}
               onClick={() => inputRef.current?.click()}
             >
-              {uploadMutation.isPending ? (
+              {uploads.length > 0 ? (
                 <Loader2 className="animate-spin" />
               ) : (
                 <Upload />
@@ -156,10 +175,54 @@ export function TaskAttachments({
           </>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-2">
+        {uploads.length > 0 && (
+          <ul className="grid gap-2">
+            {uploads.map((upload) => (
+              <li
+                key={upload.key}
+                className={cn(
+                  "grid gap-1.5 rounded-lg border px-3 py-2.5",
+                  upload.error && "border-destructive/40 bg-destructive/5"
+                )}
+              >
+                <div className="flex items-center gap-2 text-sm">
+                  {upload.error ? (
+                    <span className="font-medium text-destructive">
+                      Failed — {upload.name}
+                    </span>
+                  ) : (
+                    <>
+                      <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
+                      <span className="min-w-0 flex-1 truncate font-medium">
+                        {upload.name}
+                      </span>
+                      <span className="shrink-0 text-xs font-semibold text-muted-foreground tabular-nums">
+                        {upload.progress < 100
+                          ? `${upload.progress}%`
+                          : "Processing…"}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {!upload.error && (
+                  <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-200"
+                      style={{ width: `${upload.progress}%` }}
+                    />
+                  </div>
+                )}
+                {upload.error && (
+                  <p className="text-xs text-destructive">{upload.error}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
         {query.isLoading ? (
           <Skeleton className="h-12" />
-        ) : files.length === 0 ? (
+        ) : files.length === 0 && uploads.length === 0 ? (
           canUpload ? (
             <button
               type="button"

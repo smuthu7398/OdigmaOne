@@ -28,17 +28,27 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { api } from "@/lib/fetcher";
+import { uploadWithProgress } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
+/** Upload with a live progress toast so big files never feel stuck. */
 async function uploadFile(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const result = await api<{ id: string }>("/api/v1/files", {
-    method: "POST",
-    body: formData,
-  });
-  return `/api/v1/files/${result.data.id}`;
+  const toastId = toast.loading(`Uploading ${file.name}… 0%`);
+  try {
+    const result = await uploadWithProgress(file, {}, (percent) =>
+      toast.loading(
+        percent < 100
+          ? `Uploading ${file.name}… ${percent}%`
+          : `Processing ${file.name}…`,
+        { id: toastId }
+      )
+    );
+    toast.success("Uploaded.", { id: toastId, description: file.name });
+    return `/api/v1/files/${result.id}`;
+  } catch (err) {
+    toast.error(`${file.name}: ${(err as Error).message}`, { id: toastId });
+    throw err;
+  }
 }
 
 function ToolbarButton({

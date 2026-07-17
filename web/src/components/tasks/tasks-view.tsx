@@ -65,7 +65,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { TaskFormDialog, type TaskRow } from "./task-form-dialog";
+import { type TaskRow } from "./task-form";
 import { ViewSwitcher } from "./view-switcher";
 
 export function TasksView({
@@ -97,8 +97,6 @@ export function TasksView({
   const [priority, setPriority] = useState("ALL");
   const [type, setType] = useState("ALL");
   const [clientFilter, setClientFilter] = useState("ALL");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<TaskRow | null>(null);
   const [deleting, setDeleting] = useState<TaskRow | null>(null);
 
   const clientsQuery = useQuery({
@@ -450,13 +448,10 @@ export function TasksView({
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 {canEditTask(task) && (
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setEditing(task);
-                                      setFormOpen(true);
-                                    }}
-                                  >
-                                    <Pencil /> Edit
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/tasks/${task.id}/edit`}>
+                                      <Pencil /> Edit
+                                    </Link>
                                   </DropdownMenuItem>
                                 )}
                                 {canDelete && (
@@ -508,14 +503,6 @@ export function TasksView({
           </Button>
         </div>
       )}
-
-      <TaskFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        task={editing}
-        canAssign={canAssign}
-        lockedClientId={portalClientId}
-      />
 
       <AlertDialog
         open={deleting !== null}

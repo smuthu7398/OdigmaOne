@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ViewSwitcher } from "./view-switcher";
-import type { TaskRow } from "./task-form-dialog";
+import type { TaskRow } from "./task-form";
 
 const COLUMNS: TaskStatus[] = [
   "TODO",

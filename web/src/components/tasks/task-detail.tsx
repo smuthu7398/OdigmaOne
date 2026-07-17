@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TaskFormDialog, type TaskRow } from "./task-form-dialog";
+import { type TaskRow } from "./task-form";
 import { TaskAttachments } from "./task-attachments";
 
 type CommentRow = {
@@ -173,12 +173,10 @@ export function TaskDetail({
           <h1 className="text-xl font-semibold tracking-tight">{task.title}</h1>
         </div>
         {canEditTask && (
-          <Button
-            variant="outline"
-            className="rounded-full"
-            onClick={() => setEditOpen(true)}
-          >
-            <Pencil /> Edit
+          <Button asChild variant="outline" className="rounded-full">
+            <Link href={`/tasks/${task.id}/edit`}>
+              <Pencil /> Edit
+            </Link>
           </Button>
         )}
       </div>
@@ -416,13 +414,6 @@ export function TaskDetail({
         </Card>
       </div>
 
-      <TaskFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        task={task}
-        canAssign={canAssign}
-        lockedClientId={isPortal ? task.clientId : undefined}
-      />
     </div>
   );
 }
